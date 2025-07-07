@@ -1,7 +1,8 @@
 # Проект «Большое путешествие»
 
-* Студент: [Алевтина Додонова](https://up.htmlacademy.ru/ecmascript-individual/2/user/2586431).
-* Наставник: `Неизвестно`.
+- Студент: [Алевтина Додонова](https://up.htmlacademy.ru/ecmascript-individual/2/user/2586431).
+- Наставник: `
+Евгений Лепёшкин`.
 
 ---
 
