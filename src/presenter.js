@@ -1,12 +1,10 @@
 import { render, RenderPosition } from './render';
-import {
-  FiltersView,
-  ListView,
-  PointView,
-  PointEditView,
-  SortView,
-  TripInfoView,
-} from './view';
+import FiltersView from './view/filters-view';
+import TripInfoView from './view/trip-info-view';
+import ListView from './view/list-view';
+import SortView from './view/sort-view';
+import PointEditView from './view/point-edit-view';
+import PointView from './view/point-view';
 
 class Presenter {
   constructor({ filtersContainer, listContainer, mainContainer }) {
