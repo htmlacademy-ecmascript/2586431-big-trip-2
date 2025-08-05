@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
 
 function createEventTypeTemplate(types) {
@@ -90,7 +90,7 @@ function createDescriptionTemplate({ description, pictures }) {
     </section>`;
 }
 
-function createTemplate(point, { destinations, types, offers } = {}) {
+function createTemplate({ point, destinations, types, offers } = {}) {
   const {
     base_price: basePrice,
     date_from: dateFrom,
@@ -175,32 +175,45 @@ function createTemplate(point, { destinations, types, offers } = {}) {
     </form>`;
 }
 
-class PointEditView {
-  constructor({ point, types, offers, destinations } = {}) {
-    this.point = point;
-    this.types = types;
-    this.offers = offers;
-    this.destinations = destinations;
-  }
+class PointEditView extends AbstractStatefulView {
+  #handleFormClose = null;
+  #handleFormSubmit = null;
 
-  getTemplate() {
-    return createTemplate(this.point, {
-      types: this.types,
-      offers: this.offers,
-      destinations: this.destinations,
+  constructor({
+    point,
+    types,
+    offers,
+    destinations,
+    onFormClose,
+    onFormSubmit,
+  } = {}) {
+    super();
+    this._setState({
+      point,
+      types,
+      offers,
+      destinations,
     });
+    this.#handleFormClose = onFormClose;
+    this.#handleFormSubmit = onFormSubmit;
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element
+      .querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#formCloseHandler);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit?.();
+  };
 
-    return this.element;
-  }
+  #formCloseHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormClose?.();
+  };
 
-  removeElement() {
-    this.element = null;
+  get template() {
+    return createTemplate(this._state);
   }
 }
 

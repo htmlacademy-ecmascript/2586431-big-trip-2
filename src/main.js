@@ -1,7 +1,7 @@
-import DestinationsModel from './model/destinations-model';
-import OffersModel from './model/offers-model';
-import PointsModel from './model/points-model';
-import Presenter from './presenter';
+import DestinationsModel from './model/destinations-model.js';
+import OffersModel from './model/offers-model.js';
+import PointsModel from './model/points-model.js';
+import Presenter from './presenter.js';
 
 const mainContainer = document.querySelector('.trip-main');
 const listContainer = document.querySelector('.trip-events');
