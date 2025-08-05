@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import { render, RenderPosition } from './framework/render.js';
+import { render, RenderPosition, replace } from './framework/render.js';
 import FiltersView from './view/filters-view.js';
 import TripInfoView from './view/trip-info-view.js';
 import ListView from './view/list-view.js';
@@ -8,6 +7,13 @@ import PointEditView from './view/point-edit-view.js';
 import PointView from './view/point-view.js';
 
 class Presenter {
+  #filtersContainer = null;
+  #listContainer = null;
+  #mainContainer = null;
+  #pointsModel = null;
+  #offersModel = null;
+  #destinationsModel = null;
+
   constructor({
     filtersContainer,
     listContainer,
@@ -16,63 +22,80 @@ class Presenter {
     offersModel,
     destinationsModel,
   }) {
-    this.filtersContainer = filtersContainer;
-    this.listContainer = listContainer;
-    this.mainContainer = mainContainer;
+    this.#filtersContainer = filtersContainer;
+    this.#listContainer = listContainer;
+    this.#mainContainer = mainContainer;
 
-    this.pointsModel = pointsModel;
-    this.offersModel = offersModel;
-    this.destinationsModel = destinationsModel;
+    this.#pointsModel = pointsModel;
+    this.#offersModel = offersModel;
+    this.#destinationsModel = destinationsModel;
   }
 
-  renderFilters() {
+  #renderFilters() {
     const filters = new FiltersView();
-    render(filters, this.filtersContainer);
+    render(filters, this.#filtersContainer);
   }
 
-  renderInfo() {
+  #renderInfo() {
     const tripInfo = new TripInfoView();
-    render(tripInfo, this.mainContainer, RenderPosition.AFTERBEGIN);
+    render(tripInfo, this.#mainContainer, RenderPosition.AFTERBEGIN);
   }
 
-  prepareData() {
-    return this.pointsModel.list.map((point, idx) => ({
+  #prepareData() {
+    return this.#pointsModel.list.map((point) => ({
       ...point,
-      editing: idx === 0,
-      destination: this.destinationsModel.getById(point.destination),
-      offers: point.offers.map((id) => this.offersModel.getById(id)),
+      destination: this.#destinationsModel.getById(point.destination),
+      offers: point.offers.map((id) => this.#offersModel.getById(id)),
     }));
   }
 
-  renderList() {
-    const data = this.prepareData();
-    const types = this.offersModel.types;
-    const destinations = this.destinationsModel.list;
+  #renderPoint(point, listElement) {
+    const escKeyDownHandler = (evt) => {
+      if (evt.key === 'Escape') {
+        evt.preventDefault();
+        onFormClose();
+      }
+    };
+    const pointView = new PointView({ point, onEditClick });
+    const types = this.#offersModel.types;
+    const offers = this.#offersModel.getByType(point.type);
+    const destinations = this.#destinationsModel.list;
+    const formView = new PointEditView({
+      point,
+      types,
+      offers,
+      destinations,
+      onFormClose,
+      onFormSubmit: () => {
+        onFormClose();
+      },
+    });
+    function onEditClick() {
+      replace(formView, pointView);
+      document.addEventListener('keydown', escKeyDownHandler);
+    }
+    function onFormClose() {
+      replace(pointView, formView);
+      document.removeEventListener('keydown', escKeyDownHandler);
+    }
+    render(pointView, listElement);
+  }
+
+  #renderList() {
+    const data = this.#prepareData();
 
     const list = new ListView();
     const sort = new SortView();
-    const points = data.map((point) =>
-      point.editing
-        ? new PointEditView({
-            point,
-            types,
-            offers: this.offersModel.getByType(point.type),
-            destinations,
-          })
-        : new PointView({ point })
-    );
 
-    render(sort, this.listContainer);
-    render(list, this.listContainer);
-    points.forEach((point) => {
-      render(point, list.element);
-    });
+    render(sort, this.#listContainer);
+    render(list, this.#listContainer);
+    data.forEach((point) => this.#renderPoint(point, list.element));
   }
 
   render() {
-    this.renderFilters();
-    this.renderInfo();
-    this.renderList();
+    this.#renderFilters();
+    this.#renderInfo();
+    this.#renderList();
   }
 }
 

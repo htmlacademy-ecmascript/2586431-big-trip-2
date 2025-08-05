@@ -176,7 +176,17 @@ function createTemplate({ point, destinations, types, offers } = {}) {
 }
 
 class PointEditView extends AbstractStatefulView {
-  constructor({ point, types, offers, destinations } = {}) {
+  #handleFormClose = null;
+  #handleFormSubmit = null;
+
+  constructor({
+    point,
+    types,
+    offers,
+    destinations,
+    onFormClose,
+    onFormSubmit,
+  } = {}) {
     super();
     this._setState({
       point,
@@ -184,7 +194,23 @@ class PointEditView extends AbstractStatefulView {
       offers,
       destinations,
     });
+    this.#handleFormClose = onFormClose;
+    this.#handleFormSubmit = onFormSubmit;
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element
+      .querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#formCloseHandler);
   }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit?.();
+  };
+
+  #formCloseHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormClose?.();
+  };
 
   get template() {
     return createTemplate(this._state);
