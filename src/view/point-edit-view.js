@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
 
 function createEventTypeTemplate(types) {
@@ -90,7 +90,7 @@ function createDescriptionTemplate({ description, pictures }) {
     </section>`;
 }
 
-function createTemplate(point, { destinations, types, offers } = {}) {
+function createTemplate({ point, destinations, types, offers } = {}) {
   const {
     base_price: basePrice,
     date_from: dateFrom,
@@ -175,32 +175,19 @@ function createTemplate(point, { destinations, types, offers } = {}) {
     </form>`;
 }
 
-class PointEditView {
+class PointEditView extends AbstractStatefulView {
   constructor({ point, types, offers, destinations } = {}) {
-    this.point = point;
-    this.types = types;
-    this.offers = offers;
-    this.destinations = destinations;
-  }
-
-  getTemplate() {
-    return createTemplate(this.point, {
-      types: this.types,
-      offers: this.offers,
-      destinations: this.destinations,
+    super();
+    this._setState({
+      point,
+      types,
+      offers,
+      destinations,
     });
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
+  get template() {
+    return createTemplate(this._state);
   }
 }
 

@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 function createTemplate(type) {
   if (type === 'empty') {
@@ -13,25 +13,14 @@ function createTemplate(type) {
   throw Error('ListMessageView MUST have a proper type');
 }
 
-class ListMessageView {
+class ListMessageView extends AbstractView {
   constructor({ type }) {
+    super();
     this.type = type ?? 'empty';
   }
 
-  getTemplate() {
+  get template() {
     return createTemplate();
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate(this.type));
-    }
-
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
   }
 }
 

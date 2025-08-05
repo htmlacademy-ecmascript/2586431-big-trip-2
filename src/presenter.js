@@ -1,11 +1,11 @@
 /* eslint-disable indent */
-import { render, RenderPosition } from './render';
-import FiltersView from './view/filters-view';
-import TripInfoView from './view/trip-info-view';
-import ListView from './view/list-view';
-import SortView from './view/sort-view';
-import PointEditView from './view/point-edit-view';
-import PointView from './view/point-view';
+import { render, RenderPosition } from './framework/render.js';
+import FiltersView from './view/filters-view.js';
+import TripInfoView from './view/trip-info-view.js';
+import ListView from './view/list-view.js';
+import SortView from './view/sort-view.js';
+import PointEditView from './view/point-edit-view.js';
+import PointView from './view/point-view.js';
 
 class Presenter {
   constructor({
@@ -65,7 +65,7 @@ class Presenter {
     render(sort, this.listContainer);
     render(list, this.listContainer);
     points.forEach((point) => {
-      render(point, list.getElement());
+      render(point, list.element);
     });
   }
 
