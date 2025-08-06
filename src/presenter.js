@@ -1,10 +1,16 @@
-import { render, RenderPosition, replace } from './framework/render.js';
+import { render, RenderPosition, replace, remove } from './framework/render.js';
 import FiltersView from './view/filters-view.js';
 import TripInfoView from './view/trip-info-view.js';
 import ListView from './view/list-view.js';
 import SortView from './view/sort-view.js';
 import PointEditView from './view/point-edit-view.js';
 import PointView from './view/point-view.js';
+import {
+  sortPointsByDate,
+  sortPointsByPrice,
+  sortPointsByTime,
+} from './sorters.js';
+import { isPointFuture, isPointPresent, isPointPast } from './filters.js';
 
 class Presenter {
   #filtersContainer = null;
@@ -13,6 +19,11 @@ class Presenter {
   #pointsModel = null;
   #offersModel = null;
   #destinationsModel = null;
+  #sort = 'day';
+  #filter = 'everything';
+  #listView = null;
+  #sortView = null;
+  #filtersView = null;
 
   constructor({
     filtersContainer,
@@ -32,17 +43,52 @@ class Presenter {
   }
 
   #renderFilters() {
-    const filters = new FiltersView();
-    render(filters, this.#filtersContainer);
+    if (this.#filtersView) {
+      remove(this.#filtersView);
+    }
+    this.#filtersView = new FiltersView({
+      disabled: this.#getPoints().length < 1,
+      selected: this.#filter,
+      onFilterChange: this.#handleFilterChange.bind(this),
+    });
+    render(this.#filtersView, this.#filtersContainer);
   }
 
   #renderInfo() {
-    const tripInfo = new TripInfoView();
+    const tripInfo = new TripInfoView({ points: this.#prepareData() });
     render(tripInfo, this.#mainContainer, RenderPosition.AFTERBEGIN);
   }
 
+  #getPoints() {
+    const filteredPoints = this.#pointsModel.list.filter((point) => {
+      switch (this.#filter) {
+        case 'everything':
+          return true;
+        case 'future':
+          return isPointFuture(point);
+        case 'present':
+          return isPointPresent(point);
+        case 'past':
+          return isPointPast(point);
+        default:
+          return false;
+      }
+    });
+
+    switch (this.#sort) {
+      case 'day':
+        return sortPointsByDate(filteredPoints);
+      case 'price':
+        return sortPointsByPrice(filteredPoints);
+      case 'time':
+        return sortPointsByTime(filteredPoints);
+      default:
+        return filteredPoints;
+    }
+  }
+
   #prepareData() {
-    return this.#pointsModel.list.map((point) => ({
+    return this.#getPoints().map((point) => ({
       ...point,
       destination: this.#destinationsModel.getById(point.destination),
       offers: point.offers.map((id) => this.#offersModel.getById(id)),
@@ -81,15 +127,41 @@ class Presenter {
     render(pointView, listElement);
   }
 
+  #handleSortChange(value) {
+    this.#sort = value;
+    this.#renderPoints();
+    this.#sortView.updateElement({ selected: this.#sort });
+  }
+
+  #handleFilterChange(value) {
+    this.#filter = value;
+    this.#renderPoints();
+    this.#filtersView.updateElement({ selected: this.#filter });
+  }
+
   #renderList() {
+    const disabled = this.#getPoints().length < 1;
+    if (this.#sortView) {
+      remove(this.#sortView);
+    }
+    this.#sortView = new SortView({
+      onSortChange: this.#handleSortChange.bind(this),
+      selected: this.#sort,
+      disabled,
+    });
+
+    render(this.#sortView, this.#listContainer);
+    this.#renderPoints();
+  }
+
+  #renderPoints() {
+    if (this.#listView) {
+      remove(this.#listView);
+    }
+    this.#listView = new ListView();
+    render(this.#listView, this.#listContainer);
     const data = this.#prepareData();
-
-    const list = new ListView();
-    const sort = new SortView();
-
-    render(sort, this.#listContainer);
-    render(list, this.#listContainer);
-    data.forEach((point) => this.#renderPoint(point, list.element));
+    data.forEach((point) => this.#renderPoint(point, this.#listView.element));
   }
 
   render() {

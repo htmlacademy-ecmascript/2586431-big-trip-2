@@ -1,34 +1,71 @@
-import AbstractView from '../framework/view/abstract-view';
+/* eslint-disable indent */
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
-function createTemplate() {
+function createFilterItemTemplate({ id, label, selected, disabled }) {
+  return `<div class="trip-filters__filter">
+    <input id="filter-${id}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="${id}" ${
+    selected === id ? 'checked' : ''
+  } ${disabled ? 'disabled' : ''}>
+    <label class="trip-filters__filter-label" for="filter-${id}">${label}</label>
+  </div>`;
+}
+
+function createTemplate({ disabled, selected }) {
   return `<form class="trip-filters" action="#" method="get">
-      <div class="trip-filters__filter">
-        <input id="filter-everything" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="everything">
-        <label class="trip-filters__filter-label" for="filter-everything">Everything</label>
-      </div>
-
-      <div class="trip-filters__filter">
-        <input id="filter-future" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="future">
-        <label class="trip-filters__filter-label" for="filter-future">Future</label>
-      </div>
-
-      <div class="trip-filters__filter">
-        <input id="filter-present" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="present">
-        <label class="trip-filters__filter-label" for="filter-present">Present</label>
-      </div>
-
-      <div class="trip-filters__filter">
-        <input id="filter-past" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="past" checked>
-        <label class="trip-filters__filter-label" for="filter-past">Past</label>
-      </div>
-
+      ${createFilterItemTemplate({
+        id: 'everything',
+        label: 'Everything',
+        selected: 'everything',
+        disabled,
+      })}
+      ${createFilterItemTemplate({
+        id: 'future',
+        label: 'Future',
+        selected,
+        disabled,
+      })}
+      ${createFilterItemTemplate({
+        id: 'present',
+        label: 'Present',
+        selected,
+        disabled,
+      })}
+      ${createFilterItemTemplate({
+        id: 'past',
+        label: 'Past',
+        selected,
+        disabled,
+      })}
       <button class="visually-hidden" type="submit">Accept filter</button>
     </form>`;
 }
 
-class FiltersView extends AbstractView {
+class FiltersView extends AbstractStatefulView {
+  #onFilterChange = null;
+  constructor({ disabled, selected, onFilterChange }) {
+    super();
+    this._setState({ disabled, selected });
+    this.#onFilterChange = onFilterChange;
+    this.#setupHandlers();
+  }
+
+  #setupHandlers() {
+    this.element.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('click', this.#filterChangeHandler);
+    });
+  }
+
+  _restoreHandlers() {
+    this.#setupHandlers();
+  }
+
+  #filterChangeHandler = (evt) => {
+    evt.preventDefault();
+    this.#onFilterChange(evt.target.value);
+  };
+
   get template() {
-    return createTemplate();
+    return createTemplate(this._state);
   }
 }
 
