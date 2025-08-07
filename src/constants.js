@@ -14,4 +14,6 @@ const BasePrice = {
   MAX: 9999,
 };
 
-export { POINTS_COUNT, DateFormat, BasePrice };
+const INFO_MAX_DESTINATIONS = 3;
+
+export { POINTS_COUNT, DateFormat, BasePrice, INFO_MAX_DESTINATIONS };

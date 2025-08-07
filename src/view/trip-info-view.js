@@ -1,20 +1,57 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import dayjs from 'dayjs';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import { humanizeDate } from '../utils.js';
+import { sortPointsByDate } from '../sorters.js';
+import { INFO_MAX_DESTINATIONS } from '../constants.js';
 
-function createTemplate() {
+function getDates(points) {
+  const sortedPoints = sortPointsByDate(points);
+  const startDate = dayjs(sortedPoints[0].date_from);
+  const endDate = dayjs(sortedPoints[sortedPoints.length - 1].date_to);
+  return `${humanizeDate(startDate)} &mdash; ${humanizeDate(endDate)}`;
+}
+
+function getTotalPrice(points) {
+  return points.reduce((acc, point) => acc + point.base_price, 0);
+}
+
+function getDestinations(points) {
+  const sortedPoints = sortPointsByDate(points);
+  const destinations = sortedPoints.map((point) => point.destination.name);
+  const uniqueDestinations = destinations.filter(
+    (value, index, self) => self[index - 1] !== value
+  );
+  if (uniqueDestinations.length > INFO_MAX_DESTINATIONS) {
+    return `${uniqueDestinations[0]} &mdash; ... &mdash; ${
+      uniqueDestinations[uniqueDestinations.length - 1]
+    }`;
+  }
+  return uniqueDestinations.join(' &mdash; ');
+}
+
+function createTemplate({ points }) {
+  const dates = getDates(points);
+  const totalPrice = getTotalPrice(points);
+  const destinations = getDestinations(points);
   return `<section class="trip-main__trip-info  trip-info">
       <div class="trip-info__main">
-        <h1 class="trip-info__title">Amsterdam &mdash; Chamonix &mdash; Geneva</h1>
-        <p class="trip-info__dates">18&nbsp;&mdash;&nbsp;20 Mar</p>
+        <h1 class="trip-info__title">${destinations}</h1>
+        <p class="trip-info__dates">${dates}</p>
       </div>
       <p class="trip-info__cost">
-        Total: &euro;&nbsp;<span class="trip-info__cost-value">1230</span>
+        Total: &euro;&nbsp;<span class="trip-info__cost-value">${totalPrice}</span>
       </p>
     </section>`;
 }
 
-class TripInfoView extends AbstractView {
+class TripInfoView extends AbstractStatefulView {
+  constructor({ points }) {
+    super();
+    this._setState({ points });
+  }
+
   get template() {
-    return createTemplate();
+    return createTemplate(this._state);
   }
 }
 
