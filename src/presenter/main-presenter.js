@@ -23,6 +23,7 @@ class MainPresenter {
   #listView = null;
   #sortView = null;
   #filtersView = null;
+  #closeLastForm = null;
 
   constructor({
     filtersContainer,
@@ -86,12 +87,14 @@ class MainPresenter {
     }
   }
 
+  #preparePoint = (point) => ({
+    ...point,
+    destination: this.#destinationsModel.getById(point.destination),
+    offers: point.offers.map((id) => this.#offersModel.getById(id)),
+  });
+
   #prepareData() {
-    return this.#getPoints().map((point) => ({
-      ...point,
-      destination: this.#destinationsModel.getById(point.destination),
-      offers: point.offers.map((id) => this.#offersModel.getById(id)),
-    }));
+    return this.#getPoints().map(this.#preparePoint);
   }
 
   #renderPoint(point, listElement) {
@@ -101,8 +104,15 @@ class MainPresenter {
       offersModel: this.#offersModel,
       destinationsModel: this.#destinationsModel,
       onPointUpdate: (update) => {
-        this.#pointsModel.updatePoint(point.id, update);
-        this.#renderPoints();
+        const updatedPoint = this.#pointsModel.updatePoint(point.id, update);
+        return this.#preparePoint(updatedPoint);
+      },
+      onFormOpen: (closeForm) => {
+        this.#closeLastForm?.();
+        this.#closeLastForm = closeForm;
+      },
+      onFormClose: () => {
+        this.#closeLastForm = null;
       },
     });
     pointPresenter.render();

@@ -21,6 +21,7 @@ class PointsModel {
       return;
     }
     this.#data[index] = { ...this.#data[index], ...update };
+    return this.#data[index];
   }
 }
 

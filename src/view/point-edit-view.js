@@ -196,10 +196,18 @@ class PointEditView extends AbstractStatefulView {
     });
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
+    this.#setupHandlers();
+  }
+
+  #setupHandlers() {
     this.element.addEventListener('submit', this.#formSubmitHandler);
     this.element
       .querySelector('.event__rollup-btn')
       .addEventListener('click', this.#formCloseHandler);
+  }
+
+  _restoreHandlers() {
+    this.#setupHandlers();
   }
 
   #formSubmitHandler = (evt) => {

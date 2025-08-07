@@ -1,15 +1,26 @@
+/* eslint-disable camelcase */
 import { render, replace } from '../framework/render';
 import PointEditView from '../view/point-edit-view';
 import PointView from '../view/point-view';
 
+const Mode = {
+  VIEW: 'view',
+  EDIT: 'edit',
+};
+
 class PointPresenter {
+  #mode = null;
   #parentElement = null;
+  /** @type {import('../view/point-view').default} */
   #pointView = null;
+  /** @type {import('../view/point-edit-view').default} */
   #formView = null;
   #point = null;
   #offersModel = null;
   #destinationsModel = null;
   #onPointUpdate = null;
+  #onFormOpen = null;
+  #onFormClose = null;
 
   constructor({
     parentElement,
@@ -17,13 +28,27 @@ class PointPresenter {
     offersModel,
     destinationsModel,
     onPointUpdate,
+    onFormOpen,
+    onFormClose,
   }) {
     this.#parentElement = parentElement;
     this.#point = point;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
     this.#onPointUpdate = onPointUpdate;
+    this.#onFormOpen = onFormOpen;
+    this.#onFormClose = onFormClose;
   }
+
+  #setPoint = (point) => {
+    this.#point = point;
+    this.#pointView.updateElement({ point });
+    this.#formView.updateElement({ point });
+  };
+
+  #updatePoint = (update) => {
+    this.#setPoint(this.#onPointUpdate(update));
+  };
 
   #prepareForm() {
     const types = this.#offersModel.types;
@@ -44,7 +69,7 @@ class PointPresenter {
   render() {
     this.#pointView = new PointView({
       point: this.#point,
-      onEditClick: this.#handleEditClick,
+      onEditClick: this.#handleFormOpen,
       onFavoriteClick: this.#handleFavoriteClick,
     });
     this.#prepareForm();
@@ -58,19 +83,30 @@ class PointPresenter {
     }
   };
 
-  #handleEditClick = () => {
-    replace(this.#formView, this.#pointView);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
+  #setMode = (mode) => {
+    switch (mode) {
+      case Mode.EDIT:
+        replace(this.#formView, this.#pointView);
+        document.addEventListener('keydown', this.#escKeyDownHandler);
+        return;
+      case Mode.VIEW:
+        replace(this.#pointView, this.#formView);
+        document.removeEventListener('keydown', this.#escKeyDownHandler);
+    }
+  };
+
+  #handleFormOpen = () => {
+    this.#onFormOpen(() => this.#setMode(Mode.VIEW));
+    this.#setMode(Mode.EDIT);
   };
 
   #handleFormClose = () => {
-    replace(this.#pointView, this.#formView);
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    this.#onFormClose(() => this.#setMode(Mode.EDIT));
+    this.#setMode(Mode.VIEW);
   };
 
   #handleFavoriteClick = () => {
-    // eslint-disable-next-line camelcase
-    this.#onPointUpdate({ is_favorite: !this.#point.is_favorite });
+    this.#updatePoint({ is_favorite: !this.#point.is_favorite });
   };
 }
 
