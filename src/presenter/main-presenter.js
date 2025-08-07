@@ -100,6 +100,10 @@ class MainPresenter {
       point,
       offersModel: this.#offersModel,
       destinationsModel: this.#destinationsModel,
+      onPointUpdate: (update) => {
+        this.#pointsModel.updatePoint(point.id, update);
+        this.#renderPoints();
+      },
     });
     pointPresenter.render();
   }

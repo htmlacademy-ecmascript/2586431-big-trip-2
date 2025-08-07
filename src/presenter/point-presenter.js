@@ -9,12 +9,20 @@ class PointPresenter {
   #point = null;
   #offersModel = null;
   #destinationsModel = null;
+  #onPointUpdate = null;
 
-  constructor({ parentElement, point, offersModel, destinationsModel }) {
+  constructor({
+    parentElement,
+    point,
+    offersModel,
+    destinationsModel,
+    onPointUpdate,
+  }) {
     this.#parentElement = parentElement;
     this.#point = point;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
+    this.#onPointUpdate = onPointUpdate;
   }
 
   #prepareForm() {
@@ -37,6 +45,7 @@ class PointPresenter {
     this.#pointView = new PointView({
       point: this.#point,
       onEditClick: this.#handleEditClick,
+      onFavoriteClick: this.#handleFavoriteClick,
     });
     this.#prepareForm();
     render(this.#pointView, this.#parentElement);
@@ -57,6 +66,11 @@ class PointPresenter {
   #handleFormClose = () => {
     replace(this.#pointView, this.#formView);
     document.removeEventListener('keydown', this.#escKeyDownHandler);
+  };
+
+  #handleFavoriteClick = () => {
+    // eslint-disable-next-line camelcase
+    this.#onPointUpdate({ is_favorite: !this.#point.is_favorite });
   };
 }
 

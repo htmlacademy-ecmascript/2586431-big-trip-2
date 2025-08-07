@@ -14,6 +14,14 @@ class PointsModel {
     }
     return this.#data;
   }
+
+  updatePoint(id, update) {
+    const index = this.#data.findIndex((point) => point.id === id);
+    if (index === -1) {
+      return;
+    }
+    this.#data[index] = { ...this.#data[index], ...update };
+  }
 }
 
 export default PointsModel;
