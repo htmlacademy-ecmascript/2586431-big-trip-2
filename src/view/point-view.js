@@ -1,4 +1,4 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDate, humanizeTime, getTimeDifference } from '../utils.js';
 
 const createOfferTemplate = ({ title, price }) =>
@@ -8,7 +8,7 @@ const createOfferTemplate = ({ title, price }) =>
       <span class="event__offer-price">${price}</span>
     </li>`;
 
-function createTemplate(point) {
+function createTemplate({ point }) {
   const {
     base_price: basePrice,
     date_from: dateFrom,
@@ -78,17 +78,29 @@ function createTemplate(point) {
     </li>`;
 }
 
-class PointView extends AbstractView {
-  #point = null;
+class PointView extends AbstractStatefulView {
   #handleEditClick = null;
+  #onFavoriteClick = null;
 
-  constructor({ point, onEditClick } = {}) {
+  constructor({ point, onEditClick, onFavoriteClick } = {}) {
     super();
-    this.#point = point;
+    this._setState({ point });
     this.#handleEditClick = onEditClick;
+    this.#onFavoriteClick = onFavoriteClick;
+    this.#setupHandlers();
+  }
+
+  #setupHandlers() {
     this.element
       .querySelector('.event__rollup-btn')
       .addEventListener('click', this.#editClickHandler);
+    this.element
+      .querySelector('.event__favorite-btn')
+      .addEventListener('click', this.#favoriteClickHandler);
+  }
+
+  _restoreHandlers() {
+    this.#setupHandlers();
   }
 
   #editClickHandler = (evt) => {
@@ -97,8 +109,13 @@ class PointView extends AbstractView {
   };
 
   get template() {
-    return createTemplate(this.#point);
+    return createTemplate(this._state);
   }
+
+  #favoriteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#onFavoriteClick();
+  };
 }
 
 export default PointView;
