@@ -125,6 +125,9 @@ class MainPresenter {
   }
 
   #handleFilterChange(value) {
+    if (this.#filter === value) {
+      return;
+    }
     this.#filter = value;
     this.#renderPoints();
     this.#filtersView.updateElement({ selected: this.#filter });
