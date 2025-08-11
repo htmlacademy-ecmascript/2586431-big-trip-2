@@ -42,6 +42,7 @@ function createOffersTemplate(offers, selected) {
         <input
           class="event__offer-checkbox visually-hidden"
           id="event-offer-${id}"
+          data-id="${id}"
           type="checkbox"
           name="event-offer-${id}"
           ${isChecked ? 'checked' : ''}
@@ -98,19 +99,17 @@ function createTemplate({ point, destinations, types, offers } = {}) {
     offers: selectedOffers,
     type,
     id,
-    destination,
   } = point;
-  const { name: destinationName } = destination;
+  const destination = destinations.find(
+    (value) => value.id === point.destination
+  );
 
   const humanDateTimeFrom = humanizeDateTime(dateFrom);
   const humanDateTimeTo = humanizeDateTime(dateTo);
 
   const eventTypeTemplate = createEventTypeTemplate(types);
   const destinationsTemplate = createDestinationsTemplate(destinations);
-  const offersTemplate = createOffersTemplate(
-    offers,
-    selectedOffers.map((offer) => offer.id)
-  );
+  const offersTemplate = createOffersTemplate(offers, selectedOffers);
   const descriptionTemplate = createDescriptionTemplate(destination);
 
   return `<form class="event event--edit" action="#" method="post">
@@ -139,7 +138,7 @@ function createTemplate({ point, destinations, types, offers } = {}) {
             id="event-destination-${id}"
             type="text"
             name="event-destination"
-            value="${destinationName}"
+            value="${destination?.name ?? ''}"
             list="destination-list-${id}"
           >
           <datalist id="destination-list-${id}">
@@ -175,7 +174,7 @@ function createTemplate({ point, destinations, types, offers } = {}) {
     </form>`;
 }
 
-class PointEditView extends AbstractStatefulView {
+class PointFormView extends AbstractStatefulView {
   #handleFormClose = null;
   #handleFormSubmit = null;
 
@@ -189,6 +188,7 @@ class PointEditView extends AbstractStatefulView {
   } = {}) {
     super();
     this._setState({
+      initialPoint: point,
       point,
       types,
       offers,
@@ -200,19 +200,96 @@ class PointEditView extends AbstractStatefulView {
   }
 
   #setupHandlers() {
-    this.element.addEventListener('submit', this.#formSubmitHandler);
-    this.element
-      .querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#formCloseHandler);
+    const form = this.element;
+    form.addEventListener('submit', this.#formSubmitHandler);
+
+    const rollupBtn = form.querySelector('.event__rollup-btn');
+    rollupBtn.addEventListener('click', this.#formCloseHandler);
+
+    const typeInputs = form.querySelectorAll('.event__type-input');
+    typeInputs.forEach((input) =>
+      input.addEventListener('change', this.#typeChangeHandler)
+    );
+
+    const destinationInput = form.querySelector('.event__input--destination');
+    destinationInput.addEventListener('change', this.#destinationChangeHandler);
+    destinationInput.addEventListener('blur', this.#destinationBlurHandler);
+
+    const priceInput = form.querySelector('.event__input--price');
+    priceInput.addEventListener('change', this.#priceChangeHandler);
+
+    const offersCheckboxes = form.querySelectorAll('.event__offer-checkbox');
+    offersCheckboxes.forEach((checkbox) =>
+      checkbox.addEventListener('change', this.#offersChangeHandler)
+    );
   }
 
   _restoreHandlers() {
     this.#setupHandlers();
   }
 
+  #updatePoint = (
+    update,
+    { keepPreviousOffers = false, optimistic = false } = {}
+  ) => {
+    const point = { ...this._state.point, ...update };
+    if (keepPreviousOffers) {
+      point.offers = this._state.initialPoint.offers;
+    }
+    if (optimistic) {
+      this._setState({ point });
+    } else {
+      this.updateElement({ point });
+    }
+  };
+
+  #typeChangeHandler = (evt) => {
+    this.#updatePoint({ type: evt.target.value }, { keepPreviousOffers: true });
+  };
+
+  #destinationChangeHandler = (evt) => {
+    const name = evt.target.value;
+    const destination = this._state.destinations.find(
+      (value) => value.name === name
+    );
+    if (!destination) {
+      return;
+    }
+    this.#updatePoint(
+      { destination: destination.id },
+      { keepPreviousOffers: true }
+    );
+  };
+
+  #destinationBlurHandler = (evt) => {
+    evt.target.value = this._state.point.destination?.name ?? '';
+  };
+
+  #priceChangeHandler = (evt) => {
+    // eslint-disable-next-line camelcase
+    this.#updatePoint({ base_price: evt.target.value });
+  };
+
+  #offersChangeHandler = (evt) => {
+    const offerId = evt.target.dataset.id;
+    if (!offerId) {
+      return;
+    }
+    const currentOffers = new Set(this._state.point.offers);
+    if (evt.target.checked) {
+      currentOffers.add(offerId);
+    } else {
+      currentOffers.delete(offerId);
+    }
+    this.#updatePoint(
+      { offers: Array.from(currentOffers) },
+      { optimistic: true }
+    );
+  };
+
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit?.();
+    this.#handleFormSubmit?.(this._state.point);
   };
 
   #formCloseHandler = (evt) => {
@@ -225,4 +302,4 @@ class PointEditView extends AbstractStatefulView {
   }
 }
 
-export default PointEditView;
+export default PointFormView;

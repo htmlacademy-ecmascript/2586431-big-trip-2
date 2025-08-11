@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { render, replace } from '../framework/render';
-import PointEditView from '../view/point-edit-view';
+import PointFormView from '../view/point-form-view';
 import PointView from '../view/point-view';
 
 const Mode = {
@@ -9,11 +9,11 @@ const Mode = {
 };
 
 class PointPresenter {
-  #mode = null;
+  #currentView = null;
   #parentElement = null;
   /** @type {import('../view/point-view').default} */
   #pointView = null;
-  /** @type {import('../view/point-edit-view').default} */
+  /** @type {import('../view/point-form-view').default} */
   #formView = null;
   #point = null;
   #offersModel = null;
@@ -40,10 +40,24 @@ class PointPresenter {
     this.#onFormClose = onFormClose;
   }
 
+  #replaceViews = (next, prev) => {
+    replace(next, prev);
+    next.updateElement({});
+  };
+
+  #updateView = (view, data) => {
+    if (this.#currentView === view) {
+      view.updateElement(data);
+    } else {
+      view._setState(data);
+    }
+  };
+
   #setPoint = (point) => {
     this.#point = point;
-    this.#pointView.updateElement({ point });
-    this.#formView.updateElement({ point });
+    const pointViewUpdate = this.#preparePointViewData(point);
+    this.#updateView(this.#pointView, pointViewUpdate);
+    this.#updateView(this.#formView, { point });
   };
 
   #updatePoint = (update) => {
@@ -54,26 +68,34 @@ class PointPresenter {
     const types = this.#offersModel.types;
     const offers = this.#offersModel.getByType(this.#point.type);
     const destinations = this.#destinationsModel.list;
-    this.#formView = new PointEditView({
+    this.#formView = new PointFormView({
       point: this.#point,
       types,
       offers,
       destinations,
       onFormClose: this.#handleFormClose,
-      onFormSubmit: () => {
+      onFormSubmit: (values) => {
+        this.#updatePoint(values);
         this.#handleFormClose();
       },
     });
   }
 
+  #preparePointViewData = (point) => ({
+    point: point,
+    destinationName: this.#destinationsModel.getById(point.destination).name,
+    offers: point.offers.map((id) => this.#offersModel.getById(id)),
+  });
+
   render() {
     this.#pointView = new PointView({
-      point: this.#point,
+      ...this.#preparePointViewData(this.#point),
       onEditClick: this.#handleFormOpen,
       onFavoriteClick: this.#handleFavoriteClick,
     });
     this.#prepareForm();
     render(this.#pointView, this.#parentElement);
+    this.#currentView = this.#pointView;
   }
 
   #escKeyDownHandler = (evt) => {
@@ -86,12 +108,14 @@ class PointPresenter {
   #setMode = (mode) => {
     switch (mode) {
       case Mode.EDIT:
-        replace(this.#formView, this.#pointView);
+        this.#replaceViews(this.#formView, this.#pointView);
         document.addEventListener('keydown', this.#escKeyDownHandler);
+        this.#currentView = this.#formView;
         return;
       case Mode.VIEW:
-        replace(this.#pointView, this.#formView);
+        this.#replaceViews(this.#pointView, this.#formView);
         document.removeEventListener('keydown', this.#escKeyDownHandler);
+        this.#currentView = this.#pointView;
     }
   };
 

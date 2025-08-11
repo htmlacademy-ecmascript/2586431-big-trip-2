@@ -55,7 +55,14 @@ class MainPresenter {
   }
 
   #renderInfo() {
-    const tripInfo = new TripInfoView({ points: this.#prepareData() });
+    const enrichedPoints = this.#getPoints().map((point) => ({
+      ...point,
+      destination: this.#destinationsModel.getById(point.destination),
+      offers: point.offers.map((id) => this.#offersModel.getById(id)),
+    }));
+    const tripInfo = new TripInfoView({
+      points: enrichedPoints,
+    });
     render(tripInfo, this.#mainContainer, RenderPosition.AFTERBEGIN);
   }
 
@@ -87,16 +94,6 @@ class MainPresenter {
     }
   }
 
-  #preparePoint = (point) => ({
-    ...point,
-    destination: this.#destinationsModel.getById(point.destination),
-    offers: point.offers.map((id) => this.#offersModel.getById(id)),
-  });
-
-  #prepareData() {
-    return this.#getPoints().map(this.#preparePoint);
-  }
-
   #renderPoint(point, listElement) {
     const pointPresenter = new PointPresenter({
       parentElement: listElement,
@@ -105,7 +102,7 @@ class MainPresenter {
       destinationsModel: this.#destinationsModel,
       onPointUpdate: (update) => {
         const updatedPoint = this.#pointsModel.updatePoint(point.id, update);
-        return this.#preparePoint(updatedPoint);
+        return updatedPoint;
       },
       onFormOpen: (closeForm) => {
         this.#closeLastForm?.();
@@ -154,7 +151,7 @@ class MainPresenter {
     }
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
-    const data = this.#prepareData();
+    const data = this.#getPoints();
     data.forEach((point) => this.#renderPoint(point, this.#listView.element));
   }
 
