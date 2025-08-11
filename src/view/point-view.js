@@ -8,17 +8,14 @@ const createOfferTemplate = ({ title, price }) =>
       <span class="event__offer-price">${price}</span>
     </li>`;
 
-function createTemplate({ point }) {
+function createTemplate({ point, destinationName, offers }) {
   const {
     base_price: basePrice,
     date_from: dateFrom,
     date_to: dateTo,
     is_favorite: isFavorite,
     type,
-    destination,
-    offers,
   } = point;
-  const { name: destinationName } = destination;
 
   const humanDateFrom = humanizeDate(dateFrom);
   const humanTimeFrom = humanizeTime(dateFrom);
@@ -82,9 +79,15 @@ class PointView extends AbstractStatefulView {
   #handleEditClick = null;
   #onFavoriteClick = null;
 
-  constructor({ point, onEditClick, onFavoriteClick } = {}) {
+  constructor({
+    point,
+    destinationName,
+    offers,
+    onEditClick,
+    onFavoriteClick,
+  } = {}) {
     super();
-    this._setState({ point });
+    this._setState({ point, destinationName, offers });
     this.#handleEditClick = onEditClick;
     this.#onFavoriteClick = onFavoriteClick;
     this.#setupHandlers();
