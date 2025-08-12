@@ -177,22 +177,25 @@ function createTemplate({ point, destinations, types, offers } = {}) {
 class PointFormView extends AbstractStatefulView {
   #handleFormClose = null;
   #handleFormSubmit = null;
+  #offersModel = null;
 
   constructor({
     point,
-    types,
-    offers,
+    offersModel,
     destinations,
     onFormClose,
     onFormSubmit,
   } = {}) {
     super();
+    this.#offersModel = offersModel;
+    const offers = this.#offersModel.getByType(point.type);
+    const types = this.#offersModel.types;
     this._setState({
       initialPoint: point,
       point,
-      types,
-      offers,
       destinations,
+      offers,
+      types,
     });
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
@@ -228,14 +231,15 @@ class PointFormView extends AbstractStatefulView {
     this.#setupHandlers();
   }
 
-  #updatePoint = (
-    update,
-    { keepPreviousOffers = false, optimistic = false } = {}
-  ) => {
+  #updateAvailableOffers = (availableOffers) => {
+    this.updateElement({
+      offers: availableOffers,
+      point: { ...this._state.point, offers: [] },
+    });
+  };
+
+  #updatePoint = (update, { optimistic = false } = {}) => {
     const point = { ...this._state.point, ...update };
-    if (keepPreviousOffers) {
-      point.offers = this._state.initialPoint.offers;
-    }
     if (optimistic) {
       this._setState({ point });
     } else {
@@ -244,7 +248,9 @@ class PointFormView extends AbstractStatefulView {
   };
 
   #typeChangeHandler = (evt) => {
-    this.#updatePoint({ type: evt.target.value }, { keepPreviousOffers: true });
+    const offers = this.#offersModel.getByType(evt.target.value);
+    this.#updateAvailableOffers(offers);
+    this.#updatePoint({ type: evt.target.value });
   };
 
   #destinationChangeHandler = (evt) => {
@@ -255,10 +261,7 @@ class PointFormView extends AbstractStatefulView {
     if (!destination) {
       return;
     }
-    this.#updatePoint(
-      { destination: destination.id },
-      { keepPreviousOffers: true }
-    );
+    this.#updatePoint({ destination: destination.id });
   };
 
   #destinationBlurHandler = (evt) => {
