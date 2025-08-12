@@ -1,5 +1,8 @@
+/* eslint-disable camelcase */
+import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
+import dayjs from 'dayjs';
 
 function createEventTypeTemplate(types) {
   return types
@@ -178,6 +181,8 @@ class PointFormView extends AbstractStatefulView {
   #handleFormClose = null;
   #handleFormSubmit = null;
   #offersModel = null;
+  #startTimePicker = null;
+  #endTimePicker = null;
 
   constructor({
     point,
@@ -202,6 +207,12 @@ class PointFormView extends AbstractStatefulView {
     this.#setupHandlers();
   }
 
+  #pickerConfig = {
+    enableTime: true,
+    time_24hr: true,
+    dateFormat: 'd/m/y H:i',
+  };
+
   #setupHandlers() {
     const form = this.element;
     form.addEventListener('submit', this.#formSubmitHandler);
@@ -225,11 +236,39 @@ class PointFormView extends AbstractStatefulView {
     offersCheckboxes.forEach((checkbox) =>
       checkbox.addEventListener('change', this.#offersChangeHandler)
     );
+
+    const startTimeInput = form.querySelector('input[name="event-start-time"]');
+    const endTimeInput = form.querySelector('input[name="event-end-time"]');
+    this.#startTimePicker = flatpickr(startTimeInput, {
+      ...this.#pickerConfig,
+      onChange: (dates) => this.#timeChangeHandler(dates, true),
+    });
+    this.#endTimePicker = flatpickr(endTimeInput, {
+      ...this.#pickerConfig,
+      minDate: this.#startTimePicker.selectedDates[0],
+      onChange: (dates) => this.#timeChangeHandler(dates, false),
+    });
   }
 
   _restoreHandlers() {
     this.#setupHandlers();
   }
+
+  #timeChangeHandler = (dates, isStartTime) => {
+    const date = dayjs(dates[0]);
+    const currentEnd = dayjs(this._state.point.date_to);
+    const update = {
+      [isStartTime ? 'date_from' : 'date_to']: date.toISOString(),
+    };
+    if (isStartTime) {
+      this.#endTimePicker.set('minDate', date.toDate());
+      if (date.isAfter(currentEnd)) {
+        update.date_to = date.toISOString();
+        this.#endTimePicker.setDate(date.toDate());
+      }
+    }
+    this.#updatePoint(update, { optimistic: true });
+  };
 
   #updateAvailableOffers = (availableOffers) => {
     this.updateElement({

@@ -2,6 +2,7 @@ import DestinationsModel from './model/destinations-model.js';
 import OffersModel from './model/offers-model.js';
 import PointsModel from './model/points-model.js';
 import MainPresenter from './presenter/main-presenter.js';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const mainContainer = document.querySelector('.trip-main');
 const listContainer = document.querySelector('.trip-events');
