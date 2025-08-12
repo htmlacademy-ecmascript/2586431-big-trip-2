@@ -1,5 +1,8 @@
+/* eslint-disable camelcase */
+import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
+import dayjs from 'dayjs';
 
 function createEventTypeTemplate(types) {
   return types
@@ -177,27 +180,38 @@ function createTemplate({ point, destinations, types, offers } = {}) {
 class PointFormView extends AbstractStatefulView {
   #handleFormClose = null;
   #handleFormSubmit = null;
+  #offersModel = null;
+  #startTimePicker = null;
+  #endTimePicker = null;
 
   constructor({
     point,
-    types,
-    offers,
+    offersModel,
     destinations,
     onFormClose,
     onFormSubmit,
   } = {}) {
     super();
+    this.#offersModel = offersModel;
+    const offers = this.#offersModel.getByType(point.type);
+    const types = this.#offersModel.types;
     this._setState({
       initialPoint: point,
       point,
-      types,
-      offers,
       destinations,
+      offers,
+      types,
     });
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
     this.#setupHandlers();
   }
+
+  #pickerConfig = {
+    enableTime: true,
+    time_24hr: true,
+    dateFormat: 'd/m/y H:i',
+  };
 
   #setupHandlers() {
     const form = this.element;
@@ -222,20 +236,49 @@ class PointFormView extends AbstractStatefulView {
     offersCheckboxes.forEach((checkbox) =>
       checkbox.addEventListener('change', this.#offersChangeHandler)
     );
+
+    const startTimeInput = form.querySelector('input[name="event-start-time"]');
+    const endTimeInput = form.querySelector('input[name="event-end-time"]');
+    this.#startTimePicker = flatpickr(startTimeInput, {
+      ...this.#pickerConfig,
+      onChange: (dates) => this.#timeChangeHandler(dates, true),
+    });
+    this.#endTimePicker = flatpickr(endTimeInput, {
+      ...this.#pickerConfig,
+      minDate: this.#startTimePicker.selectedDates[0],
+      onChange: (dates) => this.#timeChangeHandler(dates, false),
+    });
   }
 
   _restoreHandlers() {
     this.#setupHandlers();
   }
 
-  #updatePoint = (
-    update,
-    { keepPreviousOffers = false, optimistic = false } = {}
-  ) => {
-    const point = { ...this._state.point, ...update };
-    if (keepPreviousOffers) {
-      point.offers = this._state.initialPoint.offers;
+  #timeChangeHandler = (dates, isStartTime) => {
+    const date = dayjs(dates[0]);
+    const currentEnd = dayjs(this._state.point.date_to);
+    const update = {
+      [isStartTime ? 'date_from' : 'date_to']: date.toISOString(),
+    };
+    if (isStartTime) {
+      this.#endTimePicker.set('minDate', date.toDate());
+      if (date.isAfter(currentEnd)) {
+        update.date_to = date.toISOString();
+        this.#endTimePicker.setDate(date.toDate());
+      }
     }
+    this.#updatePoint(update, { optimistic: true });
+  };
+
+  #updateAvailableOffers = (availableOffers) => {
+    this.updateElement({
+      offers: availableOffers,
+      point: { ...this._state.point, offers: [] },
+    });
+  };
+
+  #updatePoint = (update, { optimistic = false } = {}) => {
+    const point = { ...this._state.point, ...update };
     if (optimistic) {
       this._setState({ point });
     } else {
@@ -244,7 +287,9 @@ class PointFormView extends AbstractStatefulView {
   };
 
   #typeChangeHandler = (evt) => {
-    this.#updatePoint({ type: evt.target.value }, { keepPreviousOffers: true });
+    const offers = this.#offersModel.getByType(evt.target.value);
+    this.#updateAvailableOffers(offers);
+    this.#updatePoint({ type: evt.target.value });
   };
 
   #destinationChangeHandler = (evt) => {
@@ -255,10 +300,7 @@ class PointFormView extends AbstractStatefulView {
     if (!destination) {
       return;
     }
-    this.#updatePoint(
-      { destination: destination.id },
-      { keepPreviousOffers: true }
-    );
+    this.#updatePoint({ destination: destination.id });
   };
 
   #destinationBlurHandler = (evt) => {

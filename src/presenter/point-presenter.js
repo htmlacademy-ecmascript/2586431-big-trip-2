@@ -65,13 +65,10 @@ class PointPresenter {
   };
 
   #prepareForm() {
-    const types = this.#offersModel.types;
-    const offers = this.#offersModel.getByType(this.#point.type);
     const destinations = this.#destinationsModel.list;
     this.#formView = new PointFormView({
       point: this.#point,
-      types,
-      offers,
+      offersModel: this.#offersModel,
       destinations,
       onFormClose: this.#handleFormClose,
       onFormSubmit: (values) => {
