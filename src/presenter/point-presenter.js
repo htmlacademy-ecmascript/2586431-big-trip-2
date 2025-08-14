@@ -16,7 +16,9 @@ class PointPresenter {
   /** @type {import('../view/point-form-view').default} */
   #formView = null;
   #point = null;
+  /** @type {import('../model/offers-model').default} */
   #offersModel = null;
+  /** @type {import('../model/destinations-model').default} */
   #destinationsModel = null;
   #onPointUpdate = null;
   #onFormOpen = null;
@@ -45,23 +47,8 @@ class PointPresenter {
     next.updateElement({});
   };
 
-  #updateView = (view, data) => {
-    if (this.#currentView === view) {
-      view.updateElement(data);
-    } else {
-      view._setState(data);
-    }
-  };
-
-  #setPoint = (point) => {
-    this.#point = point;
-    const pointViewUpdate = this.#preparePointViewData(point);
-    this.#updateView(this.#pointView, pointViewUpdate);
-    this.#updateView(this.#formView, { point });
-  };
-
   #updatePoint = (update) => {
-    this.#setPoint(this.#onPointUpdate(update));
+    this.#onPointUpdate(update);
   };
 
   #prepareForm() {

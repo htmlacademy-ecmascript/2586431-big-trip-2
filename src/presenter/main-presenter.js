@@ -1,5 +1,4 @@
 import { render, RenderPosition, remove } from '../framework/render.js';
-import FiltersView from '../view/filters-view.js';
 import TripInfoView from '../view/trip-info-view.js';
 import ListView from '../view/list-view.js';
 import SortView from '../view/sort-view.js';
@@ -10,6 +9,9 @@ import {
 } from '../sorters.js';
 import { isPointFuture, isPointPresent, isPointPast } from '../filters.js';
 import PointPresenter from './point-presenter.js';
+import FiltersPresenter from './filters-presenter.js';
+import ListMessageView from '../view/list-message-view.js';
+import { FILTERS, MESSAGES, SORTS } from '../constants.js';
 
 class MainPresenter {
   #filtersContainer = null;
@@ -18,12 +20,11 @@ class MainPresenter {
   #pointsModel = null;
   #offersModel = null;
   #destinationsModel = null;
-  #sort = 'day';
-  #filter = 'everything';
   #listView = null;
   #sortView = null;
-  #filtersView = null;
   #closeLastForm = null;
+  #filtersModel = null;
+  #sortModel = null;
 
   constructor({
     filtersContainer,
@@ -32,6 +33,8 @@ class MainPresenter {
     pointsModel,
     offersModel,
     destinationsModel,
+    filtersModel,
+    sortModel,
   }) {
     this.#filtersContainer = filtersContainer;
     this.#listContainer = listContainer;
@@ -40,18 +43,58 @@ class MainPresenter {
     this.#pointsModel = pointsModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
+    this.#filtersModel = filtersModel;
+    this.#sortModel = sortModel;
+
+    this.#pointsModel.addObserver(this.#handlePointsEvent);
+    this.#filtersModel.addObserver(this.#handleFiltersEvent);
+    this.#sortModel.addObserver(this.#handleSortEvent);
+  }
+
+  #handlePointsEvent = (event) => {
+    switch (event) {
+      case this.#pointsModel.EventType.CREATE:
+        this.#filtersModel.reset();
+        this.#sortModel.reset();
+        // список обновляется при их сбросе
+        break;
+      case this.#pointsModel.EventType.UPDATE:
+      case this.#pointsModel.EventType.DELETE:
+        this.#renderPoints();
+        break;
+    }
+  };
+
+  #handleFiltersEvent = (event) => {
+    switch (event) {
+      case this.#filtersModel.EventType.CHANGE:
+      case this.#filtersModel.EventType.RESET:
+        this.#renderPoints();
+        break;
+    }
+  };
+
+  #handleSortEvent = (event, payload) => {
+    switch (event) {
+      case this.#sortModel.EventType.CHANGE:
+      case this.#sortModel.EventType.RESET:
+        this.#renderPoints();
+        this.#sortView.updateElement({ selected: payload });
+        break;
+    }
+  };
+
+  #handleSortChange(value) {
+    this.#sortModel.sort = value;
   }
 
   #renderFilters() {
-    if (this.#filtersView) {
-      remove(this.#filtersView);
-    }
-    this.#filtersView = new FiltersView({
+    const filtersPresenter = new FiltersPresenter({
+      parentElement: this.#filtersContainer,
       disabled: this.#getPoints().length < 1,
-      selected: this.#filter,
-      onFilterChange: this.#handleFilterChange.bind(this),
+      filtersModel: this.#filtersModel,
     });
-    render(this.#filtersView, this.#filtersContainer);
+    filtersPresenter.render();
   }
 
   #renderInfo() {
@@ -67,27 +110,29 @@ class MainPresenter {
   }
 
   #getPoints() {
+    const filter = this.#filtersModel.filter;
     const filteredPoints = this.#pointsModel.list.filter((point) => {
-      switch (this.#filter) {
-        case 'everything':
+      switch (filter) {
+        case FILTERS.EVERYTHING:
           return true;
-        case 'future':
+        case FILTERS.FUTURE:
           return isPointFuture(point);
-        case 'present':
+        case FILTERS.PRESENT:
           return isPointPresent(point);
-        case 'past':
+        case FILTERS.PAST:
           return isPointPast(point);
         default:
           return false;
       }
     });
 
-    switch (this.#sort) {
-      case 'day':
+    const sort = this.#sortModel.sort;
+    switch (sort) {
+      case SORTS.DAY:
         return sortPointsByDate(filteredPoints);
-      case 'price':
+      case SORTS.PRICE:
         return sortPointsByPrice(filteredPoints);
-      case 'time':
+      case SORTS.TIME:
         return sortPointsByTime(filteredPoints);
       default:
         return filteredPoints;
@@ -115,21 +160,6 @@ class MainPresenter {
     pointPresenter.render();
   }
 
-  #handleSortChange(value) {
-    this.#sort = value;
-    this.#renderPoints();
-    this.#sortView.updateElement({ selected: this.#sort });
-  }
-
-  #handleFilterChange(value) {
-    if (this.#filter === value) {
-      return;
-    }
-    this.#filter = value;
-    this.#renderPoints();
-    this.#filtersView.updateElement({ selected: this.#filter });
-  }
-
   #renderList() {
     const disabled = this.#getPoints().length < 1;
     if (this.#sortView) {
@@ -137,7 +167,7 @@ class MainPresenter {
     }
     this.#sortView = new SortView({
       onSortChange: this.#handleSortChange.bind(this),
-      selected: this.#sort,
+      selected: this.#sortModel.sort,
       disabled,
     });
 
@@ -152,6 +182,13 @@ class MainPresenter {
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
     const data = this.#getPoints();
+    if (!data.length) {
+      const listMessageView = new ListMessageView({
+        message: MESSAGES.EMPTY[this.#filtersModel.filter],
+      });
+      render(listMessageView, this.#listView.element);
+      return;
+    }
     data.forEach((point) => this.#renderPoint(point, this.#listView.element));
   }
 
