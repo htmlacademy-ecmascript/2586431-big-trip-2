@@ -11,7 +11,8 @@ import { isPointFuture, isPointPresent, isPointPast } from '../filters.js';
 import PointPresenter from './point-presenter.js';
 import FiltersPresenter from './filters-presenter.js';
 import ListMessageView from '../view/list-message-view.js';
-import { FILTERS, MESSAGES, SORTS } from '../constants.js';
+import { DEFAULTS, FILTERS, MESSAGES, SORTS } from '../constants.js';
+import PointFormView from '../view/point-form-view.js';
 
 class MainPresenter {
   #filtersContainer = null;
@@ -25,6 +26,7 @@ class MainPresenter {
   #closeLastForm = null;
   #filtersModel = null;
   #sortModel = null;
+  #newPointView = null;
 
   constructor({
     filtersContainer,
@@ -49,14 +51,55 @@ class MainPresenter {
     this.#pointsModel.addObserver(this.#handlePointsEvent);
     this.#filtersModel.addObserver(this.#handleFiltersEvent);
     this.#sortModel.addObserver(this.#handleSortEvent);
+
+    this.#mainContainer
+      .querySelector('.trip-main__event-add-btn')
+      .addEventListener('click', this.#handleNewPointClick);
+    document.addEventListener('keydown', this.#newPointEscHandler);
   }
+
+  #newPointEscHandler = (evt) => {
+    if (evt.key === 'Escape' && this.#newPointView) {
+      this.#closeNewPointView();
+    }
+  };
+
+  #closeNewPointView = () => {
+    remove(this.#newPointView);
+    this.#newPointView = null;
+  };
+
+  #handleNewPointClick = () => {
+    if (this.#newPointView || !this.#listView.element) {
+      return;
+    }
+    if (this.#closeLastForm) {
+      this.#closeLastForm();
+    }
+    this.#closeLastForm = this.#closeNewPointView;
+    this.#newPointView = new PointFormView({
+      point: DEFAULTS.POINT,
+      offersModel: this.#offersModel,
+      destinations: this.#destinationsModel.list,
+      onFormClose: this.#closeNewPointView,
+      onFormSubmit: (body) => {
+        this.#pointsModel.createPoint(body);
+        this.#closeNewPointView();
+      },
+    });
+    this.#resetList();
+  };
+
+  #resetList = () => {
+    this.#filtersModel.reset();
+    this.#sortModel.reset();
+    this.#renderPoints();
+  };
 
   #handlePointsEvent = (event) => {
     switch (event) {
       case this.#pointsModel.EventType.CREATE:
-        this.#filtersModel.reset();
-        this.#sortModel.reset();
-        // список обновляется при их сбросе
+        this.#resetList();
         break;
       case this.#pointsModel.EventType.UPDATE:
       case this.#pointsModel.EventType.DELETE:
@@ -146,8 +189,7 @@ class MainPresenter {
       offersModel: this.#offersModel,
       destinationsModel: this.#destinationsModel,
       onPointUpdate: (update) => {
-        const updatedPoint = this.#pointsModel.updatePoint(point.id, update);
-        return updatedPoint;
+        this.#pointsModel.updatePoint(point.id, update);
       },
       onFormOpen: (closeForm) => {
         this.#closeLastForm?.();
@@ -155,6 +197,9 @@ class MainPresenter {
       },
       onFormClose: () => {
         this.#closeLastForm = null;
+      },
+      onPointDelete: () => {
+        this.#pointsModel.deletePoint(point.id);
       },
     });
     pointPresenter.render();
@@ -182,12 +227,15 @@ class MainPresenter {
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
     const data = this.#getPoints();
-    if (!data.length) {
+    if (!data.length && !this.#newPointView) {
       const listMessageView = new ListMessageView({
         message: MESSAGES.EMPTY[this.#filtersModel.filter],
       });
       render(listMessageView, this.#listView.element);
       return;
+    }
+    if (this.#newPointView) {
+      render(this.#newPointView, this.#listView.element);
     }
     data.forEach((point) => this.#renderPoint(point, this.#listView.element));
   }

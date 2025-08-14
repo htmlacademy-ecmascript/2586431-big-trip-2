@@ -21,6 +21,7 @@ class PointPresenter {
   /** @type {import('../model/destinations-model').default} */
   #destinationsModel = null;
   #onPointUpdate = null;
+  #onPointDelete = null;
   #onFormOpen = null;
   #onFormClose = null;
 
@@ -30,6 +31,7 @@ class PointPresenter {
     offersModel,
     destinationsModel,
     onPointUpdate,
+    onPointDelete,
     onFormOpen,
     onFormClose,
   }) {
@@ -38,6 +40,7 @@ class PointPresenter {
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
     this.#onPointUpdate = onPointUpdate;
+    this.#onPointDelete = onPointDelete;
     this.#onFormOpen = onFormOpen;
     this.#onFormClose = onFormClose;
   }
@@ -51,6 +54,10 @@ class PointPresenter {
     this.#onPointUpdate(update);
   };
 
+  #handleDelete = () => {
+    this.#onPointDelete();
+  };
+
   #prepareForm() {
     const destinations = this.#destinationsModel.list;
     this.#formView = new PointFormView({
@@ -62,6 +69,7 @@ class PointPresenter {
         this.#updatePoint(values);
         this.#handleFormClose();
       },
+      onReset: this.#handleDelete,
     });
   }
 

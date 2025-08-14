@@ -39,6 +39,7 @@ class PointsModel extends Observable {
   }
 
   createPoint(point) {
+    point.id = String(this.#data.length + 1);
     this.#data.push(point);
     this._notify(EventType.CREATE, point);
   }

@@ -34,6 +34,12 @@ const FILTERS = {
 const DEFAULTS = {
   FILTER: FILTERS.EVERYTHING,
   SORT: SORTS.DAY,
+  POINT: {
+    type: 'flight',
+    // eslint-disable-next-line camelcase
+    base_price: 0,
+    offers: [],
+  },
 };
 
 const MESSAGES = {
