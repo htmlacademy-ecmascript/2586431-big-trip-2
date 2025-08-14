@@ -1,8 +1,10 @@
+/* eslint-disable indent */
 /* eslint-disable camelcase */
 import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
 import dayjs from 'dayjs';
+import { DEFAULTS } from '../constants.js';
 
 function createEventTypeTemplate(types) {
   return types
@@ -67,7 +69,7 @@ function createOffersTemplate(offers, selected) {
     </section>`;
 }
 
-function createDescriptionTemplate({ description, pictures }) {
+function createDescriptionTemplate({ description, pictures } = {}) {
   if (!description) {
     return '';
   }
@@ -101,10 +103,10 @@ function createTemplate({ point, destinations, types, offers } = {}) {
     date_to: dateTo,
     offers: selectedOffers,
     type,
-    id,
+    id = 'new',
   } = point;
   const destination = destinations.find(
-    (value) => value.id === point.destination
+    (value) => value.id === point?.destination
   );
 
   const humanDateTimeFrom = humanizeDateTime(dateFrom);
@@ -165,7 +167,9 @@ function createTemplate({ point, destinations, types, offers } = {}) {
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Delete</button>
+        <button class="event__reset-btn" type="reset">${
+          id === 'new' ? 'Cancel' : 'Delete'
+        }</button>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
         </button>
@@ -183,6 +187,7 @@ class PointFormView extends AbstractStatefulView {
   #offersModel = null;
   #startTimePicker = null;
   #endTimePicker = null;
+  #handleReset = null;
 
   constructor({
     point,
@@ -190,20 +195,22 @@ class PointFormView extends AbstractStatefulView {
     destinations,
     onFormClose,
     onFormSubmit,
+    onReset,
   } = {}) {
     super();
     this.#offersModel = offersModel;
-    const offers = this.#offersModel.getByType(point.type);
+    const offers = point?.type ? this.#offersModel.getByType(point.type) : [];
     const types = this.#offersModel.types;
     this._setState({
       initialPoint: point,
-      point,
+      point: point ?? DEFAULTS.POINT,
       destinations,
       offers,
       types,
     });
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
+    this.#handleReset = onReset ?? this.#handleFormClose;
     this.#setupHandlers();
   }
 
@@ -216,6 +223,7 @@ class PointFormView extends AbstractStatefulView {
   #setupHandlers() {
     const form = this.element;
     form.addEventListener('submit', this.#formSubmitHandler);
+    form.addEventListener('reset', this.#handleReset);
 
     const rollupBtn = form.querySelector('.event__rollup-btn');
     rollupBtn.addEventListener('click', this.#formCloseHandler);
@@ -304,7 +312,10 @@ class PointFormView extends AbstractStatefulView {
   };
 
   #destinationBlurHandler = (evt) => {
-    evt.target.value = this._state.point.destination?.name ?? '';
+    const destination = this._state.destinations.find(
+      (value) => value.id === this._state.point.destination
+    );
+    evt.target.value = destination?.name ?? '';
   };
 
   #priceChangeHandler = (evt) => {

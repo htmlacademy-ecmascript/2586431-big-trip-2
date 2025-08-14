@@ -5,6 +5,9 @@ import { sortPointsByDate } from '../sorters.js';
 import { INFO_MAX_DESTINATIONS } from '../constants.js';
 
 function getDates(points) {
+  if (!points.length) {
+    return '';
+  }
   const sortedPoints = sortPointsByDate(points);
   const startDate = dayjs(sortedPoints[0].date_from);
   const endDate = dayjs(sortedPoints[sortedPoints.length - 1].date_to);
@@ -12,10 +15,16 @@ function getDates(points) {
 }
 
 function getTotalPrice(points) {
+  if (!points.length) {
+    return 0;
+  }
   return points.reduce((acc, point) => acc + point.base_price, 0);
 }
 
 function getDestinations(points) {
+  if (!points.length) {
+    return '';
+  }
   const sortedPoints = sortPointsByDate(points);
   const destinations = sortedPoints.map((point) => point.destination.name);
   const uniqueDestinations = destinations.filter(

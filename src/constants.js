@@ -16,4 +16,50 @@ const BasePrice = {
 
 const INFO_MAX_DESTINATIONS = 3;
 
-export { POINTS_COUNT, DateFormat, BasePrice, INFO_MAX_DESTINATIONS };
+const SORTS = {
+  DAY: 'day',
+  PRICE: 'price',
+  TIME: 'time',
+  OFFER: 'offer',
+  EVENT: 'event',
+};
+
+const FILTERS = {
+  EVERYTHING: 'everything',
+  PAST: 'past',
+  PRESENT: 'present',
+  FUTURE: 'future',
+};
+
+const DEFAULTS = {
+  FILTER: FILTERS.EVERYTHING,
+  SORT: SORTS.DAY,
+  POINT: {
+    type: 'flight',
+    // eslint-disable-next-line camelcase
+    base_price: 0,
+    offers: [],
+  },
+};
+
+const MESSAGES = {
+  EMPTY: {
+    [FILTERS.EVERYTHING]: 'Click New Event to create your first point',
+    [FILTERS.PAST]: 'There are no past events now',
+    [FILTERS.PRESENT]: 'There are no present events now',
+    [FILTERS.FUTURE]: 'There are no future events now',
+  },
+  LOADING: 'Loading...',
+  FAILED: 'Failed to load latest route information',
+};
+
+export {
+  POINTS_COUNT,
+  DateFormat,
+  BasePrice,
+  INFO_MAX_DESTINATIONS,
+  DEFAULTS,
+  SORTS,
+  FILTERS,
+  MESSAGES,
+};
