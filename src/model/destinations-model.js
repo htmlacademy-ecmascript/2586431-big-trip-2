@@ -1,10 +1,28 @@
-import { destinations as mockDestinations } from '../mock/destinations';
+// @ts-check
+import Observable from '../framework/observable.js';
 
-class DestinationsModel {
+const EventType = {
+  INIT: 'init',
+};
+
+class DestinationsModel extends Observable {
+  /** @type {TDestination[]} */
   #data;
+  #api;
 
-  constructor() {
-    this.#data = mockDestinations;
+  EventType = EventType;
+
+  /** @param {{ api: import('../api').default }} */
+  constructor({ api }) {
+    super();
+    this.#api = api;
+    this.updateData().then(() => {
+      this._notify(EventType.INIT, this.#data);
+    });
+  }
+
+  async updateData() {
+    this.#data = await this.#api.getDestinations();
   }
 
   get list() {
@@ -12,6 +30,10 @@ class DestinationsModel {
       return [];
     }
     return this.#data;
+  }
+
+  get isLoaded() {
+    return this.#data !== undefined;
   }
 
   getById(id) {

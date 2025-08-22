@@ -8,7 +8,7 @@ const getRandomArrayElement = (items) =>
   items[Math.floor(Math.random() * items.length)];
 
 const humanizeDateTime = (date) =>
-  dayjs(date).format(DateFormat.DAY_MONTH_YEAR_HOUR_MINUTE);
+  date ? dayjs(date).format(DateFormat.DAY_MONTH_YEAR_HOUR_MINUTE) : '';
 
 const humanizeDate = (date) => dayjs(date).format(DateFormat.MONTH_DAY);
 

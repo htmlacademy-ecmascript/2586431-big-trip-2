@@ -1,3 +1,4 @@
+// @ts-check
 /* eslint-disable indent */
 /* eslint-disable camelcase */
 import flatpickr from 'flatpickr';
@@ -6,6 +7,9 @@ import { humanizeDateTime } from '../utils.js';
 import dayjs from 'dayjs';
 import { DEFAULTS } from '../constants.js';
 
+/**
+ * @param {string[]} types
+ */
 function createEventTypeTemplate(types) {
   return types
     .map(
@@ -29,12 +33,19 @@ function createEventTypeTemplate(types) {
     .join('');
 }
 
+/**
+ * @param {TDestination[]} destinations
+ */
 function createDestinationsTemplate(destinations) {
   return destinations
     .map(({ name }) => `<option value="${name}"></option>`)
     .join('');
 }
 
+/**
+ * @param {TOffer[]} offers
+ * @param {string[] | undefined} selected
+ */
 function createOffersTemplate(offers, selected) {
   if (offers.length === 0) {
     return '';
@@ -42,7 +53,7 @@ function createOffersTemplate(offers, selected) {
 
   const offersListTemplate = offers
     .map(({ id, title, price }) => {
-      const isChecked = selected.includes(id);
+      const isChecked = selected?.includes(id);
       return `<div class="event__offer-selector">
         <input
           class="event__offer-checkbox visually-hidden"
@@ -69,13 +80,17 @@ function createOffersTemplate(offers, selected) {
     </section>`;
 }
 
-function createDescriptionTemplate({ description, pictures } = {}) {
+/**
+ * @param {TDestination | undefined} destination
+ */
+function createDescriptionTemplate(destination) {
+  const { description, pictures } = destination ?? {};
   if (!description) {
     return '';
   }
 
   const picturesListTemplate = pictures
-    .map(
+    ?.map(
       (picture) =>
         `<img class="event__photo" src="${picture.src}" alt="${picture.description}">`
     )
@@ -96,7 +111,16 @@ function createDescriptionTemplate({ description, pictures } = {}) {
     </section>`;
 }
 
-function createTemplate({ point, destinations, types, offers } = {}) {
+/**
+ * @param {{
+ *   point: Partial<TPoint>;
+ *   destinations: TDestination[];
+ *   types: string[];
+ *   offers: TOffer[];
+ * }} state
+ */
+function createTemplate(state) {
+  const { point, destinations, types, offers } = state;
   const {
     base_price: basePrice,
     date_from: dateFrom,
@@ -145,6 +169,7 @@ function createTemplate({ point, destinations, types, offers } = {}) {
             name="event-destination"
             value="${destination?.name ?? ''}"
             list="destination-list-${id}"
+            required
           >
           <datalist id="destination-list-${id}">
             ${destinationsTemplate}
@@ -153,17 +178,17 @@ function createTemplate({ point, destinations, types, offers } = {}) {
 
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-${id}">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${humanDateTimeFrom}">
+          <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${humanDateTimeFrom}" required>
           &mdash;
           <label class="visually-hidden" for="event-end-time-${id}">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${humanDateTimeTo}">
+          <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${humanDateTimeTo}" required>
         </div>
 
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-${id}">
             <span class="visually-hidden">Price</span>&euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice}">
+          <input class="event__input  event__input--price" id="event-price-${id}" type="number" min="1" required name="event-price" value="${basePrice}">
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -182,13 +207,25 @@ function createTemplate({ point, destinations, types, offers } = {}) {
 }
 
 class PointFormView extends AbstractStatefulView {
-  #handleFormClose = null;
-  #handleFormSubmit = null;
-  #offersModel = null;
-  #startTimePicker = null;
-  #endTimePicker = null;
-  #handleReset = null;
+  #handleFormClose;
+  #handleFormSubmit;
+  #offersModel;
+  #handleReset;
+  /** @type {import('flatpickr').default.Instance} */
+  #startTimePicker;
+  /** @type {import('flatpickr').default.Instance} */
+  #endTimePicker;
 
+  /**
+   * @param {{
+   *   point: Partial<TPoint>;
+   *   offersModel: import('../model/offers-model').default;
+   *   destinations: TDestination[];
+   *   onFormClose: () => void;
+   *   onFormSubmit: (body: TPoint) => Promise<void>;
+   *   onReset?: () => void;
+   * }} config
+   */
   constructor({
     point,
     offersModel,
@@ -196,7 +233,7 @@ class PointFormView extends AbstractStatefulView {
     onFormClose,
     onFormSubmit,
     onReset,
-  } = {}) {
+  }) {
     super();
     this.#offersModel = offersModel;
     const offers = point?.type ? this.#offersModel.getByType(point.type) : [];
@@ -226,7 +263,7 @@ class PointFormView extends AbstractStatefulView {
     form.addEventListener('reset', this.#handleReset);
 
     const rollupBtn = form.querySelector('.event__rollup-btn');
-    rollupBtn.addEventListener('click', this.#formCloseHandler);
+    rollupBtn?.addEventListener('click', this.#formCloseHandler);
 
     const typeInputs = form.querySelectorAll('.event__type-input');
     typeInputs.forEach((input) =>
@@ -234,11 +271,14 @@ class PointFormView extends AbstractStatefulView {
     );
 
     const destinationInput = form.querySelector('.event__input--destination');
-    destinationInput.addEventListener('change', this.#destinationChangeHandler);
-    destinationInput.addEventListener('blur', this.#destinationBlurHandler);
+    destinationInput?.addEventListener(
+      'change',
+      this.#destinationChangeHandler
+    );
+    destinationInput?.addEventListener('blur', this.#destinationBlurHandler);
 
     const priceInput = form.querySelector('.event__input--price');
-    priceInput.addEventListener('change', this.#priceChangeHandler);
+    priceInput?.addEventListener('change', this.#priceChangeHandler);
 
     const offersCheckboxes = form.querySelectorAll('.event__offer-checkbox');
     offersCheckboxes.forEach((checkbox) =>
@@ -247,21 +287,29 @@ class PointFormView extends AbstractStatefulView {
 
     const startTimeInput = form.querySelector('input[name="event-start-time"]');
     const endTimeInput = form.querySelector('input[name="event-end-time"]');
-    this.#startTimePicker = flatpickr(startTimeInput, {
-      ...this.#pickerConfig,
-      onChange: (dates) => this.#timeChangeHandler(dates, true),
-    });
-    this.#endTimePicker = flatpickr(endTimeInput, {
-      ...this.#pickerConfig,
-      minDate: this.#startTimePicker.selectedDates[0],
-      onChange: (dates) => this.#timeChangeHandler(dates, false),
-    });
+    if (startTimeInput && endTimeInput) {
+      this.#startTimePicker = flatpickr(startTimeInput, {
+        ...this.#pickerConfig,
+        defaultDate: this._state.point.date_from ?? null,
+        onChange: (dates) => this.#timeChangeHandler(dates, true),
+      });
+      this.#endTimePicker = flatpickr(endTimeInput, {
+        ...this.#pickerConfig,
+        minDate: this.#startTimePicker.selectedDates[0],
+        defaultDate: this._state.point.date_to ?? null,
+        onChange: (dates) => this.#timeChangeHandler(dates, false),
+      });
+    }
   }
 
   _restoreHandlers() {
     this.#setupHandlers();
   }
 
+  /**
+   * @param {Date[]} dates
+   * @param {boolean} isStartTime
+   */
   #timeChangeHandler = (dates, isStartTime) => {
     const date = dayjs(dates[0]);
     const currentEnd = dayjs(this._state.point.date_to);
@@ -278,6 +326,9 @@ class PointFormView extends AbstractStatefulView {
     this.#updatePoint(update, { optimistic: true });
   };
 
+  /**
+   * @param {TOffer[]} availableOffers
+   */
   #updateAvailableOffers = (availableOffers) => {
     this.updateElement({
       offers: availableOffers,
@@ -285,6 +336,10 @@ class PointFormView extends AbstractStatefulView {
     });
   };
 
+  /**
+   * @param {Partial<TPoint>} update
+   * @param {{ optimistic?: boolean }} options
+   */
   #updatePoint = (update, { optimistic = false } = {}) => {
     const point = { ...this._state.point, ...update };
     if (optimistic) {
@@ -296,7 +351,7 @@ class PointFormView extends AbstractStatefulView {
 
   #typeChangeHandler = (evt) => {
     const offers = this.#offersModel.getByType(evt.target.value);
-    this.#updateAvailableOffers(offers);
+    this.#updateAvailableOffers(offers ?? []);
     this.#updatePoint({ type: evt.target.value });
   };
 
@@ -320,7 +375,7 @@ class PointFormView extends AbstractStatefulView {
 
   #priceChangeHandler = (evt) => {
     // eslint-disable-next-line camelcase
-    this.#updatePoint({ base_price: evt.target.value });
+    this.#updatePoint({ base_price: Number(evt.target.value) });
   };
 
   #offersChangeHandler = (evt) => {
@@ -340,9 +395,9 @@ class PointFormView extends AbstractStatefulView {
     );
   };
 
-  #formSubmitHandler = (evt) => {
+  #formSubmitHandler = async (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit?.(this._state.point);
+    await this.#handleFormSubmit?.(this._state.point);
   };
 
   #formCloseHandler = (evt) => {

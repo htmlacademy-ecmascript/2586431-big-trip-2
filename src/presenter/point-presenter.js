@@ -1,3 +1,4 @@
+// @ts-check
 /* eslint-disable camelcase */
 import { render, replace } from '../framework/render';
 import PointFormView from '../view/point-form-view';
@@ -9,22 +10,33 @@ const Mode = {
 };
 
 class PointPresenter {
-  #currentView = null;
-  #parentElement = null;
-  /** @type {import('../view/point-view').default} */
-  #pointView = null;
-  /** @type {import('../view/point-form-view').default} */
-  #formView = null;
-  #point = null;
-  /** @type {import('../model/offers-model').default} */
-  #offersModel = null;
-  /** @type {import('../model/destinations-model').default} */
-  #destinationsModel = null;
-  #onPointUpdate = null;
-  #onPointDelete = null;
-  #onFormOpen = null;
-  #onFormClose = null;
+  #parentElement;
+  #point;
+  #offersModel;
+  #destinationsModel;
+  #onPointUpdate;
+  #onPointDelete;
+  #onFormOpen;
+  #onFormClose;
+  /** @type {PointView | PointFormView} */
+  #currentView;
+  /** @type {PointView} */
+  #pointView;
+  /** @type {PointFormView} */
+  #formView;
 
+  /**
+   * @param {{
+   * parentElement: HTMLElement,
+   * point: TPoint,
+   * offersModel: import('../model/offers-model').default,
+   * destinationsModel: import('../model/destinations-model').default,
+   * onPointUpdate: (body: Partial<TPoint>) => void,
+   * onPointDelete: () => void,
+   * onFormOpen: (cb?: () => void) => void,
+   * onFormClose: (cb?: () => void) => void,
+   * }} config
+   */
   constructor({
     parentElement,
     point,
@@ -50,12 +62,8 @@ class PointPresenter {
     next.updateElement({});
   };
 
-  #updatePoint = (update) => {
-    this.#onPointUpdate(update);
-  };
-
-  #handleDelete = () => {
-    this.#onPointDelete();
+  #handleDelete = async () => {
+    await this.#onPointDelete();
   };
 
   #prepareForm() {
@@ -65,18 +73,23 @@ class PointPresenter {
       offersModel: this.#offersModel,
       destinations,
       onFormClose: this.#handleFormClose,
-      onFormSubmit: (values) => {
-        this.#updatePoint(values);
+      onFormSubmit: async (values) => {
+        await this.#onPointUpdate(values);
         this.#handleFormClose();
       },
       onReset: this.#handleDelete,
     });
   }
 
+  /**
+   * @param {TPoint} point
+   */
   #preparePointViewData = (point) => ({
     point: point,
-    destinationName: this.#destinationsModel.getById(point.destination).name,
-    offers: point.offers.map((id) => this.#offersModel.getById(id)),
+    destinationName: this.#destinationsModel.getById(point.destination)?.name,
+    offers: /** @type {TOffer[]} */ (
+      point.offers.map((id) => this.#offersModel.getById(id)).filter(Boolean)
+    ),
   });
 
   render() {
@@ -97,6 +110,9 @@ class PointPresenter {
     }
   };
 
+  /**
+   * @param {string} mode
+   */
   #setMode = (mode) => {
     switch (mode) {
       case Mode.EDIT:
@@ -121,8 +137,8 @@ class PointPresenter {
     this.#setMode(Mode.VIEW);
   };
 
-  #handleFavoriteClick = () => {
-    this.#updatePoint({ is_favorite: !this.#point.is_favorite });
+  #handleFavoriteClick = async () => {
+    await this.#onPointUpdate({ is_favorite: !this.#point.is_favorite });
   };
 }
 
