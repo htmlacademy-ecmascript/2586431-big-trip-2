@@ -14,6 +14,12 @@ import FiltersPresenter from './filters-presenter.js';
 import ListMessageView from '../view/list-message-view.js';
 import { DEFAULTS, FILTERS, MESSAGES, SORTS } from '../constants.js';
 import PointFormView from '../view/point-form-view.js';
+import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
+
+const BLOCKER_LIMITS = {
+  LOWER: 350,
+  UPPER: 1000,
+};
 
 class MainPresenter {
   #filtersContainer;
@@ -32,6 +38,7 @@ class MainPresenter {
   #closeLastForm = null;
   /** @type {PointFormView | null} */
   #newPointView = null;
+  #uiBlocker;
 
   /**
    * @param {{
@@ -75,6 +82,11 @@ class MainPresenter {
       .querySelector('.trip-main__event-add-btn')
       ?.addEventListener('click', this.#handleNewPointClick);
     document.addEventListener('keydown', this.#newPointEscHandler);
+
+    this.#uiBlocker = new UiBlocker({
+      lowerLimit: BLOCKER_LIMITS.LOWER,
+      upperLimit: BLOCKER_LIMITS.UPPER,
+    });
   }
 
   /**
@@ -108,7 +120,10 @@ class MainPresenter {
       destinations: this.#destinationsModel.list,
       onFormClose: this.#closeNewPointView,
       onFormSubmit: async (body) => {
-        await this.#pointsModel.createPoint(body);
+        this.#uiBlocker.block();
+        await this.#pointsModel.createPoint(body).finally(() => {
+          this.#uiBlocker.unblock();
+        });
         this.#closeNewPointView();
       },
     });
@@ -253,7 +268,10 @@ class MainPresenter {
       offersModel: this.#offersModel,
       destinationsModel: this.#destinationsModel,
       onPointUpdate: async (update) => {
-        await this.#pointsModel.updatePoint(point.id, update);
+        this.#uiBlocker.block();
+        await this.#pointsModel.updatePoint(point.id, update).finally(() => {
+          this.#uiBlocker.unblock();
+        });
       },
       onFormOpen: (closeForm) => {
         this.#closeLastForm?.();
@@ -263,10 +281,21 @@ class MainPresenter {
         this.#closeLastForm = null;
       },
       onPointDelete: async () => {
-        await this.#pointsModel.deletePoint(point.id);
+        this.#uiBlocker.block();
+        await this.#pointsModel.deletePoint(point.id).finally(() => {
+          this.#uiBlocker.unblock();
+        });
       },
     });
     pointPresenter.render();
+  }
+
+  /** @param {boolean} disabled */
+  #updateSortViewDisabled(disabled) {
+    if (!this.#sortView || this.#sortView._state.disabled === disabled) {
+      return;
+    }
+    this.#sortView.updateElement({ disabled });
   }
 
   #renderList() {
@@ -298,6 +327,7 @@ class MainPresenter {
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
     const data = this.#getPoints();
+    this.#updateSortViewDisabled(data.length < 1);
     if (!data.length && !this.#newPointView) {
       const listMessageView = new ListMessageView({
         message: MESSAGES.EMPTY[this.#filtersModel.filter],

@@ -32,7 +32,7 @@ class PointPresenter {
    * offersModel: import('../model/offers-model').default,
    * destinationsModel: import('../model/destinations-model').default,
    * onPointUpdate: (body: Partial<TPoint>) => void,
-   * onPointDelete: () => void,
+   * onPointDelete: () => Promise<void>,
    * onFormOpen: (cb?: () => void) => void,
    * onFormClose: (cb?: () => void) => void,
    * }} config
@@ -64,6 +64,7 @@ class PointPresenter {
 
   #handleDelete = async () => {
     await this.#onPointDelete();
+    this.#handleFormClose();
   };
 
   #prepareForm() {
