@@ -1,3 +1,4 @@
+// @ts-check
 import Observable from '../framework/observable';
 import { DEFAULTS } from '../constants';
 
@@ -7,6 +8,7 @@ const EventType = {
 };
 
 class FiltersModel extends Observable {
+  /** @type {string} */
   #filter;
 
   EventType = EventType;

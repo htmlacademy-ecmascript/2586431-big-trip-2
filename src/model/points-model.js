@@ -1,21 +1,33 @@
-import { POINTS_COUNT } from '../constants';
-import { getRandomPoint as getRandomMockPoint } from '../mock/points';
+// @ts-check
 import Observable from '../framework/observable';
 
 const EventType = {
   CREATE: 'create',
   UPDATE: 'update',
   DELETE: 'delete',
+  FETCH: 'fetch',
+  INIT: 'init',
 };
 
 class PointsModel extends Observable {
+  /** @type {TPoint[]} */
   #data;
+  #api;
 
   EventType = EventType;
 
-  constructor() {
+  /** @param {{ api: import('../api').default }} */
+  constructor({ api }) {
     super();
-    this.#data = Array.from({ length: POINTS_COUNT }, getRandomMockPoint);
+    this.#api = api;
+    this.updateList().then(() => {
+      this._notify(EventType.INIT, this.#data);
+    });
+  }
+
+  async updateList() {
+    this.#data = await this.#api.getPoints();
+    this._notify(EventType.FETCH, this.#data);
   }
 
   get list() {
@@ -25,31 +37,38 @@ class PointsModel extends Observable {
     return this.#data;
   }
 
+  get isLoaded() {
+    return this.#data !== undefined;
+  }
+
+  /** @param {string} id */
   getPointById(id) {
     return this.#data.find((point) => point.id === id);
   }
 
-  updatePoint(id, update) {
-    const index = this.#data.findIndex((point) => point.id === id);
-    if (index === -1) {
-      return;
-    }
-    this.#data[index] = { ...this.#data[index], ...update };
-    this._notify(EventType.UPDATE, { id, update });
+  /**
+   * @param {string} id
+   * @param {Partial<TPoint>} body
+   */
+  async updatePoint(id, body) {
+    const current = this.getPointById(id);
+    const update = /** @type {TPoint} */ ({ ...current, ...body });
+    const updated = await this.#api.updatePoint(id, update);
+    await this.updateList();
+    this._notify(EventType.UPDATE, { id, body, updated });
   }
 
-  createPoint(point) {
-    point.id = String(this.#data.length + 1);
-    this.#data.push(point);
-    this._notify(EventType.CREATE, point);
+  /** @param {TPoint} point */
+  async createPoint(point) {
+    const created = await this.#api.createPoint(point);
+    await this.updateList();
+    this._notify(EventType.CREATE, created);
   }
 
-  deletePoint(id) {
-    const index = this.#data.findIndex((point) => point.id === id);
-    if (index === -1) {
-      return;
-    }
-    this.#data.splice(index, 1);
+  /** @param {string} id */
+  async deletePoint(id) {
+    await this.#api.deletePoint(id);
+    await this.updateList();
     this._notify(EventType.DELETE, id);
   }
 }

@@ -34,11 +34,14 @@ const FILTERS = {
 const DEFAULTS = {
   FILTER: FILTERS.EVERYTHING,
   SORT: SORTS.DAY,
+  /** @type {Partial<TPoint>} */
   POINT: {
     type: 'flight',
     // eslint-disable-next-line camelcase
     base_price: 0,
     offers: [],
+    // eslint-disable-next-line camelcase
+    is_favorite: false,
   },
 };
 

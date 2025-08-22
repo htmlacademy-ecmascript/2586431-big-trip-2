@@ -1,10 +1,28 @@
-import { offers as mockOffers } from '../mock/offers';
+// @ts-check
+import Observable from '../framework/observable.js';
 
-class OffersModel {
+const EventType = {
+  INIT: 'init',
+};
+
+class OffersModel extends Observable {
+  /** @type {TOffersGroup[]} */
   #data;
+  #api;
 
-  constructor() {
-    this.#data = mockOffers;
+  EventType = EventType;
+
+  /** @param {{ api: import('../api').default }} */
+  constructor({ api }) {
+    super();
+    this.#api = api;
+    this.updateData().then(() => {
+      this._notify(EventType.INIT, this.#data);
+    });
+  }
+
+  async updateData() {
+    this.#data = await this.#api.getOffers();
   }
 
   get list() {
@@ -14,6 +32,11 @@ class OffersModel {
     return this.#data;
   }
 
+  get isLoaded() {
+    return this.#data !== undefined;
+  }
+
+  /** @param {string} id */
   getById(id) {
     for (const type of this.list) {
       const offer = type.offers.find((destination) => destination.id === id);
@@ -23,6 +46,7 @@ class OffersModel {
     }
   }
 
+  /** @param {string} type */
   getByType(type) {
     return this.list.find((offer) => offer.type === type)?.offers;
   }

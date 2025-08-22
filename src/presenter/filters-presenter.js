@@ -3,6 +3,7 @@ import { remove, render } from '../framework/render';
 import FiltersView from '../view/filters-view';
 
 class FiltersPresenter {
+  /** @type {HTMLElement} */
   #parentElement = null;
   /** @type {import('../view/filters-view').default} */
   #filtersView = null;
@@ -10,6 +11,13 @@ class FiltersPresenter {
   /** @type {import('../model/filters-model').default} */
   #filtersModel = null;
 
+  /**
+   * @param {{
+   *   parentElement: HTMLElement;
+   *   disabled?: boolean;
+   *   filtersModel: import('../model/filters-model').default;
+   * }}
+   */
   constructor({ parentElement, disabled, filtersModel }) {
     this.#parentElement = parentElement;
     this.#disabled = disabled;

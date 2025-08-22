@@ -1,3 +1,4 @@
+// @ts-check
 import { render, RenderPosition, remove } from '../framework/render.js';
 import TripInfoView from '../view/trip-info-view.js';
 import ListView from '../view/list-view.js';
@@ -15,19 +16,35 @@ import { DEFAULTS, FILTERS, MESSAGES, SORTS } from '../constants.js';
 import PointFormView from '../view/point-form-view.js';
 
 class MainPresenter {
-  #filtersContainer = null;
-  #listContainer = null;
-  #mainContainer = null;
-  #pointsModel = null;
-  #offersModel = null;
-  #destinationsModel = null;
-  #listView = null;
-  #sortView = null;
+  #filtersContainer;
+  #listContainer;
+  #mainContainer;
+  #pointsModel;
+  #offersModel;
+  #destinationsModel;
+  #filtersModel;
+  #sortModel;
+  /** @type {ListView} */
+  #listView;
+  /** @type {SortView} */
+  #sortView;
+  /** @type {(() => void) | null} */
   #closeLastForm = null;
-  #filtersModel = null;
-  #sortModel = null;
+  /** @type {PointFormView | null} */
   #newPointView = null;
 
+  /**
+   * @param {{
+   *  filtersContainer: HTMLElement;
+   *  listContainer: HTMLElement;
+   *  mainContainer: HTMLElement;
+   *  pointsModel: import('../model/points-model').default;
+   *  offersModel: import('../model/offers-model').default;
+   *  destinationsModel: import('../model/destinations-model').default;
+   *  filtersModel: import('../model/filters-model').default;
+   *  sortModel: import('../model/sort-model').default;
+   * }} config
+   */
   constructor({
     filtersContainer,
     listContainer,
@@ -49,15 +66,20 @@ class MainPresenter {
     this.#sortModel = sortModel;
 
     this.#pointsModel.addObserver(this.#handlePointsEvent);
+    this.#offersModel.addObserver(this.#handleOffersEvent);
+    this.#destinationsModel.addObserver(this.#handleDestinationsEvent);
     this.#filtersModel.addObserver(this.#handleFiltersEvent);
     this.#sortModel.addObserver(this.#handleSortEvent);
 
     this.#mainContainer
       .querySelector('.trip-main__event-add-btn')
-      .addEventListener('click', this.#handleNewPointClick);
+      ?.addEventListener('click', this.#handleNewPointClick);
     document.addEventListener('keydown', this.#newPointEscHandler);
   }
 
+  /**
+   * @param {KeyboardEvent} evt
+   */
   #newPointEscHandler = (evt) => {
     if (evt.key === 'Escape' && this.#newPointView) {
       this.#closeNewPointView();
@@ -65,6 +87,9 @@ class MainPresenter {
   };
 
   #closeNewPointView = () => {
+    if (!this.#newPointView) {
+      return;
+    }
     remove(this.#newPointView);
     this.#newPointView = null;
   };
@@ -82,8 +107,8 @@ class MainPresenter {
       offersModel: this.#offersModel,
       destinations: this.#destinationsModel.list,
       onFormClose: this.#closeNewPointView,
-      onFormSubmit: (body) => {
-        this.#pointsModel.createPoint(body);
+      onFormSubmit: async (body) => {
+        await this.#pointsModel.createPoint(body);
         this.#closeNewPointView();
       },
     });
@@ -96,6 +121,31 @@ class MainPresenter {
     this.#renderPoints();
   };
 
+  /**
+   * @param {string} event
+   */
+  #handleOffersEvent = (event) => {
+    switch (event) {
+      case this.#offersModel.EventType.INIT:
+        this.#renderPoints();
+        break;
+    }
+  };
+
+  /**
+   * @param {string} event
+   */
+  #handleDestinationsEvent = (event) => {
+    switch (event) {
+      case this.#destinationsModel.EventType.INIT:
+        this.#renderPoints();
+        break;
+    }
+  };
+
+  /**
+   * @param {string} event
+   */
   #handlePointsEvent = (event) => {
     switch (event) {
       case this.#pointsModel.EventType.CREATE:
@@ -103,11 +153,15 @@ class MainPresenter {
         break;
       case this.#pointsModel.EventType.UPDATE:
       case this.#pointsModel.EventType.DELETE:
+      case this.#pointsModel.EventType.INIT:
         this.#renderPoints();
         break;
     }
   };
 
+  /**
+   * @param {string} event
+   */
   #handleFiltersEvent = (event) => {
     switch (event) {
       case this.#filtersModel.EventType.CHANGE:
@@ -117,6 +171,10 @@ class MainPresenter {
     }
   };
 
+  /**
+   * @param {string} event
+   * @param {string} payload
+   */
   #handleSortEvent = (event, payload) => {
     switch (event) {
       case this.#sortModel.EventType.CHANGE:
@@ -127,6 +185,9 @@ class MainPresenter {
     }
   };
 
+  /**
+   * @param {string} value
+   */
   #handleSortChange(value) {
     this.#sortModel.sort = value;
   }
@@ -134,7 +195,6 @@ class MainPresenter {
   #renderFilters() {
     const filtersPresenter = new FiltersPresenter({
       parentElement: this.#filtersContainer,
-      disabled: this.#getPoints().length < 1,
       filtersModel: this.#filtersModel,
     });
     filtersPresenter.render();
@@ -182,24 +242,28 @@ class MainPresenter {
     }
   }
 
+  /**
+   * @param {TPoint} point
+   * @param {HTMLElement} listElement
+   */
   #renderPoint(point, listElement) {
     const pointPresenter = new PointPresenter({
       parentElement: listElement,
       point,
       offersModel: this.#offersModel,
       destinationsModel: this.#destinationsModel,
-      onPointUpdate: (update) => {
-        this.#pointsModel.updatePoint(point.id, update);
+      onPointUpdate: async (update) => {
+        await this.#pointsModel.updatePoint(point.id, update);
       },
       onFormOpen: (closeForm) => {
         this.#closeLastForm?.();
-        this.#closeLastForm = closeForm;
+        this.#closeLastForm = closeForm ?? null;
       },
       onFormClose: () => {
         this.#closeLastForm = null;
       },
-      onPointDelete: () => {
-        this.#pointsModel.deletePoint(point.id);
+      onPointDelete: async () => {
+        await this.#pointsModel.deletePoint(point.id);
       },
     });
     pointPresenter.render();
@@ -221,6 +285,13 @@ class MainPresenter {
   }
 
   #renderPoints() {
+    if (
+      !this.#pointsModel.isLoaded ||
+      !this.#offersModel.isLoaded ||
+      !this.#destinationsModel.isLoaded
+    ) {
+      return;
+    }
     if (this.#listView) {
       remove(this.#listView);
     }

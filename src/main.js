@@ -1,3 +1,5 @@
+import Api from './api.js';
+import { API_URL, AUTH_TOKEN } from './env.js';
 import DestinationsModel from './model/destinations-model.js';
 import OffersModel from './model/offers-model.js';
 import PointsModel from './model/points-model.js';
@@ -10,9 +12,11 @@ const mainContainer = document.querySelector('.trip-main');
 const listContainer = document.querySelector('.trip-events');
 const filtersContainer = document.querySelector('.trip-controls__filters');
 
-const pointsModel = new PointsModel();
-const offersModel = new OffersModel();
-const destinationsModel = new DestinationsModel();
+const api = new Api(API_URL, AUTH_TOKEN);
+
+const pointsModel = new PointsModel({ api });
+const offersModel = new OffersModel({ api });
+const destinationsModel = new DestinationsModel({ api });
 const filtersModel = new FiltersModel();
 const sortModel = new SortModel();
 
