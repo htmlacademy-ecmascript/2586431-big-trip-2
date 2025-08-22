@@ -117,10 +117,21 @@ function createDescriptionTemplate(destination) {
  *   destinations: TDestination[];
  *   types: string[];
  *   offers: TOffer[];
+ *   isSaving: boolean;
+ *   isResetting: boolean;
+ *   disabled: boolean;
  * }} state
  */
 function createTemplate(state) {
-  const { point, destinations, types, offers } = state;
+  const {
+    point,
+    destinations,
+    types,
+    offers,
+    isSaving,
+    isResetting,
+    disabled,
+  } = state;
   const {
     base_price: basePrice,
     date_from: dateFrom,
@@ -141,7 +152,18 @@ function createTemplate(state) {
   const offersTemplate = createOffersTemplate(offers, selectedOffers);
   const descriptionTemplate = createDescriptionTemplate(destination);
 
-  return `<form class="event event--edit" action="#" method="post">
+  let resetButtonText = 'Cancel';
+  if (isResetting) {
+    resetButtonText = 'Cancelling...';
+  }
+  if (id !== 'new') {
+    resetButtonText = 'Delete';
+    if (isResetting) {
+      resetButtonText = 'Deleting...';
+    }
+  }
+
+  return `<form class="event event--edit" action="#" method="post" autocomplete="off">
       <header class="event__header">
         <div class="event__type-wrapper">
           <label class="event__type event__type-btn" for="event-type-toggle-${id}">
@@ -170,6 +192,7 @@ function createTemplate(state) {
             value="${destination?.name ?? ''}"
             list="destination-list-${id}"
             required
+            ${disabled ? 'disabled' : ''}
           >
           <datalist id="destination-list-${id}">
             ${destinationsTemplate}
@@ -178,23 +201,35 @@ function createTemplate(state) {
 
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-${id}">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${humanDateTimeFrom}" required>
+          <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${humanDateTimeFrom}" required ${
+    disabled ? 'disabled' : ''
+  }>
           &mdash;
           <label class="visually-hidden" for="event-end-time-${id}">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${humanDateTimeTo}" required>
+          <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${humanDateTimeTo}" required ${
+    disabled ? 'disabled' : ''
+  }>
         </div>
 
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-${id}">
             <span class="visually-hidden">Price</span>&euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-${id}" type="number" min="1" required name="event-price" value="${basePrice}">
+          <input class="event__input  event__input--price" id="event-price-${id}" type="number" min="1" required name="event-price" value="${basePrice}" ${
+    disabled ? 'disabled' : ''
+  }>
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">${
-          id === 'new' ? 'Cancel' : 'Delete'
-        }</button>
+        <button class="event__save-btn  btn  btn--blue" type="submit" ${
+          disabled ? 'disabled' : ''
+        }>
+          ${isSaving ? 'Saving...' : 'Save'}
+        </button>
+        <button class="event__reset-btn" type="reset" ${
+          disabled ? 'disabled' : ''
+        }>
+          ${resetButtonText}
+        </button>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
         </button>
@@ -207,6 +242,7 @@ function createTemplate(state) {
 }
 
 class PointFormView extends AbstractStatefulView {
+  /** @type {() => void | Promise<void>} */
   #handleFormClose;
   #handleFormSubmit;
   #offersModel;
@@ -223,7 +259,7 @@ class PointFormView extends AbstractStatefulView {
    *   destinations: TDestination[];
    *   onFormClose: () => void;
    *   onFormSubmit: (body: TPoint) => Promise<void>;
-   *   onReset?: () => void;
+   *   onReset?: () => void | Promise<void>;
    * }} config
    */
   constructor({
@@ -260,7 +296,7 @@ class PointFormView extends AbstractStatefulView {
   #setupHandlers() {
     const form = this.element;
     form.addEventListener('submit', this.#formSubmitHandler);
-    form.addEventListener('reset', this.#handleReset);
+    form.addEventListener('reset', this.#resetHandler);
 
     const rollupBtn = form.querySelector('.event__rollup-btn');
     rollupBtn?.addEventListener('click', this.#formCloseHandler);
@@ -311,6 +347,9 @@ class PointFormView extends AbstractStatefulView {
    * @param {boolean} isStartTime
    */
   #timeChangeHandler = (dates, isStartTime) => {
+    if (this._state.disabled) {
+      return;
+    }
     const date = dayjs(dates[0]);
     const currentEnd = dayjs(this._state.point.date_to);
     const update = {
@@ -350,12 +389,18 @@ class PointFormView extends AbstractStatefulView {
   };
 
   #typeChangeHandler = (evt) => {
+    if (this._state.disabled) {
+      return;
+    }
     const offers = this.#offersModel.getByType(evt.target.value);
     this.#updateAvailableOffers(offers ?? []);
     this.#updatePoint({ type: evt.target.value });
   };
 
   #destinationChangeHandler = (evt) => {
+    if (this._state.disabled) {
+      return;
+    }
     const name = evt.target.value;
     const destination = this._state.destinations.find(
       (value) => value.name === name
@@ -374,11 +419,17 @@ class PointFormView extends AbstractStatefulView {
   };
 
   #priceChangeHandler = (evt) => {
+    if (this._state.disabled) {
+      return;
+    }
     // eslint-disable-next-line camelcase
     this.#updatePoint({ base_price: Number(evt.target.value) });
   };
 
   #offersChangeHandler = (evt) => {
+    if (this._state.disabled) {
+      return;
+    }
     const offerId = evt.target.dataset.id;
     if (!offerId) {
       return;
@@ -397,12 +448,37 @@ class PointFormView extends AbstractStatefulView {
 
   #formSubmitHandler = async (evt) => {
     evt.preventDefault();
-    await this.#handleFormSubmit?.(this._state.point);
+    if (this._state.disabled) {
+      return;
+    }
+    this.updateElement({ isSaving: true, disabled: true });
+    const reset = () =>
+      this._state.isSaving &&
+      this.updateElement({ isSaving: false, disabled: false });
+    await this.#handleFormSubmit?.(this._state.point).catch((err) => {
+      this.shake(reset);
+      throw err;
+    });
+    reset();
   };
 
-  #formCloseHandler = (evt) => {
+  #formCloseHandler = async (evt) => {
     evt.preventDefault();
     this.#handleFormClose?.();
+  };
+
+  #resetHandler = async () => {
+    if (this._state.disabled) {
+      return;
+    }
+    const reset = this.#handleReset?.();
+    if (!(reset instanceof Promise)) {
+      return;
+    }
+    this.updateElement({ isResetting: true, disabled: true });
+    await reset.finally(() => {
+      this.updateElement({ isResetting: false, disabled: false });
+    });
   };
 
   get template() {
