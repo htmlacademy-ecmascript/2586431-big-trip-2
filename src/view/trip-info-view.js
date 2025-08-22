@@ -18,7 +18,13 @@ function getTotalPrice(points) {
   if (!points.length) {
     return 0;
   }
-  return points.reduce((acc, point) => acc + point.base_price, 0);
+  return points.reduce(
+    (sum, point) =>
+      sum +
+      point.base_price +
+      point.offers.reduce((offersSum, offer) => offersSum + offer.price, 0),
+    0
+  );
 }
 
 function getDestinations(points) {
