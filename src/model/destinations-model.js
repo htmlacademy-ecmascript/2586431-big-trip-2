@@ -12,7 +12,7 @@ class DestinationsModel extends Observable {
 
   EventType = EventType;
 
-  /** @param {{ api: import('../api').default }} */
+  /** @param {{ api: import('../api').default }} config */
   constructor({ api }) {
     super();
     this.#api = api;
