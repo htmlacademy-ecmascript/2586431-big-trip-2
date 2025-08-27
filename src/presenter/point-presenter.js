@@ -31,7 +31,7 @@ class PointPresenter {
    * point: TPoint,
    * offersModel: import('../model/offers-model').default,
    * destinationsModel: import('../model/destinations-model').default,
-   * onPointUpdate: (body: Partial<TPoint>) => void,
+   * onPointUpdate: (body: Partial<TPoint>) => Promise<void>,
    * onPointDelete: () => Promise<void>,
    * onFormOpen: (cb?: () => void) => void,
    * onFormClose: (cb?: () => void) => void,
@@ -122,6 +122,7 @@ class PointPresenter {
         this.#currentView = this.#formView;
         return;
       case Mode.VIEW:
+        this.#formView.reset();
         this.#replaceViews(this.#pointView, this.#formView);
         document.removeEventListener('keydown', this.#escKeyDownHandler);
         this.#currentView = this.#pointView;
@@ -139,7 +140,11 @@ class PointPresenter {
   };
 
   #handleFavoriteClick = async () => {
-    await this.#onPointUpdate({ is_favorite: !this.#point.is_favorite });
+    await this.#onPointUpdate({
+      is_favorite: !this.#point.is_favorite,
+    }).catch(() => {
+      this.#pointView.shake();
+    });
   };
 }
 

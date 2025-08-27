@@ -9,11 +9,10 @@ function createFilterItemTemplate({
   disabled,
   available,
 }) {
-  const unavailable = available?.length && !available.includes(id);
   return `<div class="trip-filters__filter">
     <input id="filter-${id}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="${id}" ${
     selected === id ? 'checked' : ''
-  } ${disabled || unavailable ? 'disabled' : ''}>
+  } ${disabled || !available?.includes(id) ? 'disabled' : ''}>
     <label class="trip-filters__filter-label" for="filter-${id}">${label}</label>
   </div>`;
 }

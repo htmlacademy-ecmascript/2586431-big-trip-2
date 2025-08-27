@@ -41,6 +41,7 @@ class FiltersPresenter {
       disabled: this.#disabled,
       selected: this.#filtersModel.filter,
       onFilterChange: this.#handleFilterChange.bind(this),
+      available: [],
     });
     render(this.#filtersView, this.#parentElement);
   }

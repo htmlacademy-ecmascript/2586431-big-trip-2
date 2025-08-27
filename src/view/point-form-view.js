@@ -103,11 +103,17 @@ function createDescriptionTemplate(destination) {
       <p class="event__destination-description">
         ${description}
       </p>
+      ${
+        pictures?.length
+          ? `
       <div class="event__photos-container">
         <div class="event__photos-tape">
           ${picturesListTemplate}
         </div>
       </div>
+      `
+          : ''
+      }
     </section>`;
 }
 
@@ -163,7 +169,7 @@ function createTemplate(state) {
     }
   }
 
-  return `<form class="event event--edit" action="#" method="post" autocomplete="off">
+  return `<div><form class="event event--edit" action="#" method="post" autocomplete="off">
       <header class="event__header">
         <div class="event__type-wrapper">
           <label class="event__type event__type-btn" for="event-type-toggle-${id}">
@@ -225,9 +231,7 @@ function createTemplate(state) {
         }>
           ${isSaving ? 'Saving...' : 'Save'}
         </button>
-        <button class="event__reset-btn" type="reset" ${
-          disabled ? 'disabled' : ''
-        }>
+        <button class="event__reset-btn" type="reset">
           ${resetButtonText}
         </button>
         <button class="event__rollup-btn" type="button">
@@ -238,7 +242,7 @@ function createTemplate(state) {
         ${offersTemplate}
         ${descriptionTemplate}
       </section>
-    </form>`;
+    </form></div>`;
 }
 
 class PointFormView extends AbstractStatefulView {
@@ -423,7 +427,10 @@ class PointFormView extends AbstractStatefulView {
       return;
     }
     // eslint-disable-next-line camelcase
-    this.#updatePoint({ base_price: Number(evt.target.value) });
+    this.#updatePoint(
+      { base_price: Number(evt.target.value) },
+      { optimistic: true }
+    );
   };
 
   #offersChangeHandler = (evt) => {
@@ -455,17 +462,21 @@ class PointFormView extends AbstractStatefulView {
     const reset = () =>
       this._state.isSaving &&
       this.updateElement({ isSaving: false, disabled: false });
-    await this.#handleFormSubmit?.(this._state.point).catch((err) => {
-      this.shake(reset);
-      throw err;
+    await this.#handleFormSubmit?.(this._state.point).catch(() => {
+      reset();
+      this.shake();
     });
-    reset();
   };
 
   #formCloseHandler = async (evt) => {
     evt.preventDefault();
+    this.reset();
     this.#handleFormClose?.();
   };
+
+  reset() {
+    this.updateElement({ point: this._state.initialPoint });
+  }
 
   #resetHandler = async () => {
     if (this._state.disabled) {
@@ -476,8 +487,9 @@ class PointFormView extends AbstractStatefulView {
       return;
     }
     this.updateElement({ isResetting: true, disabled: true });
-    await reset.finally(() => {
+    await reset.catch(() => {
       this.updateElement({ isResetting: false, disabled: false });
+      this.shake();
     });
   };
 

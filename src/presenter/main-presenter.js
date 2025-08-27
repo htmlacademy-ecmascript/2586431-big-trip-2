@@ -41,6 +41,7 @@ class MainPresenter {
   /** @type {PointFormView | null} */
   #newPointView = null;
   #uiBlocker;
+  #newPointButton;
 
   /**
    * @param {{
@@ -80,9 +81,11 @@ class MainPresenter {
     this.#filtersModel.addObserver(this.#handleFiltersEvent);
     this.#sortModel.addObserver(this.#handleSortEvent);
 
-    this.#mainContainer
-      .querySelector('.trip-main__event-add-btn')
-      ?.addEventListener('click', this.#handleNewPointClick);
+    this.#newPointButton = /** @type {HTMLButtonElement} */ (
+      this.#mainContainer.querySelector('.trip-main__event-add-btn')
+    );
+
+    this.#newPointButton?.addEventListener('click', this.#handleNewPointClick);
     document.addEventListener('keydown', this.#newPointEscHandler);
 
     this.#uiBlocker = new UiBlocker({
@@ -114,6 +117,10 @@ class MainPresenter {
     }
     remove(this.#newPointView);
     this.#newPointView = null;
+    this.#newPointButton.disabled = false;
+    if (!this.#getPoints().length) {
+      this.#renderMessage(MESSAGES.EMPTY[this.#filtersModel.filter]);
+    }
   };
 
   #handleNewPointClick = () => {
@@ -124,6 +131,7 @@ class MainPresenter {
       this.#closeLastForm();
     }
     this.#closeLastForm = this.#closeNewPointView;
+    this.#newPointButton.disabled = true;
     this.#newPointView = new PointFormView({
       point: DEFAULTS.POINT,
       offersModel: this.#offersModel,
@@ -153,6 +161,10 @@ class MainPresenter {
     switch (event) {
       case this.#offersModel.EventType.INIT:
         this.#renderPoints();
+        this.#updateInfo();
+        break;
+      case this.#offersModel.EventType.ERROR:
+        this.#renderMessage(MESSAGES.FAILED);
         break;
     }
   };
@@ -164,6 +176,10 @@ class MainPresenter {
     switch (event) {
       case this.#destinationsModel.EventType.INIT:
         this.#renderPoints();
+        this.#updateInfo();
+        break;
+      case this.#offersModel.EventType.ERROR:
+        this.#renderMessage(MESSAGES.FAILED);
         break;
     }
   };
@@ -183,6 +199,9 @@ class MainPresenter {
         this.#renderPoints();
         this.#updateInfo();
         break;
+      case this.#pointsModel.EventType.ERROR:
+        this.#renderMessage(MESSAGES.FAILED);
+        break;
     }
   };
 
@@ -193,7 +212,7 @@ class MainPresenter {
     switch (event) {
       case this.#filtersModel.EventType.CHANGE:
       case this.#filtersModel.EventType.RESET:
-        this.#renderPoints();
+        this.#sortModel.reset();
         break;
     }
   };
@@ -341,8 +360,30 @@ class MainPresenter {
     this.#renderPoints();
   }
 
+  /** @param {string} message */
+  #renderMessage(message) {
+    if (this.#listView) {
+      remove(this.#listView);
+    }
+    this.#listView = new ListView();
+    render(this.#listView, this.#listContainer);
+    const listMessageView = new ListMessageView({
+      message,
+    });
+    render(listMessageView, this.#listView.element);
+  }
+
   #renderPoints() {
     if (!this.isReady) {
+      if (!this.#listView) {
+        this.#renderMessage(MESSAGES.LOADING);
+      }
+      return;
+    }
+    const data = this.#getPoints();
+    this.#updateSortViewDisabled(data.length < 1);
+    if (!data.length && !this.#newPointView) {
+      this.#renderMessage(MESSAGES.EMPTY[this.#filtersModel.filter]);
       return;
     }
     if (this.#listView) {
@@ -350,15 +391,6 @@ class MainPresenter {
     }
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
-    const data = this.#getPoints();
-    this.#updateSortViewDisabled(data.length < 1);
-    if (!data.length && !this.#newPointView) {
-      const listMessageView = new ListMessageView({
-        message: MESSAGES.EMPTY[this.#filtersModel.filter],
-      });
-      render(listMessageView, this.#listView.element);
-      return;
-    }
     if (this.#newPointView) {
       render(this.#newPointView, this.#listView.element);
     }

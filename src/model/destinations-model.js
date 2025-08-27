@@ -3,6 +3,7 @@ import Observable from '../framework/observable.js';
 
 const EventType = {
   INIT: 'init',
+  ERROR: 'error',
 };
 
 class DestinationsModel extends Observable {
@@ -22,7 +23,11 @@ class DestinationsModel extends Observable {
   }
 
   async updateData() {
-    this.#data = await this.#api.getDestinations();
+    try {
+      this.#data = await this.#api.getDestinations();
+    } catch (err) {
+      this._notify(EventType.ERROR, err);
+    }
   }
 
   get list() {

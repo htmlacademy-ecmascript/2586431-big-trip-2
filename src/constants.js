@@ -2,11 +2,13 @@ const POINTS_COUNT = 4;
 
 const DateFormat = {
   MONTH_DAY: 'MMM D',
+  DAY_MONTH: 'D MMM',
   HOUR_MINUTE: 'HH:mm',
   DAY_MONTH_YEAR_HOUR_MINUTE: 'DD/MM/YY HH:mm',
   DURATION_MINUTE: 'mm[M]',
   DURATION_HOUR_MINUTE: 'HH[H] mm[M]',
-  DURATION_DAY_HOUR_MINUTE: 'DD[D] HH[H] mm[M]',
+  DURATION_DAY_SUFFIX: 'D',
+  DURATION_DAY_PAD: 2,
 };
 
 const BasePrice = {
