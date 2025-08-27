@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { FILTERS } from '../constants';
+import { FilterType } from '../constants';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
 function createFilterItemTemplate({
@@ -20,28 +20,28 @@ function createFilterItemTemplate({
 function createTemplate({ disabled, selected, available }) {
   return `<form class="trip-filters" action="#" method="get">
       ${createFilterItemTemplate({
-        id: FILTERS.EVERYTHING,
+        id: FilterType.EVERYTHING,
         label: 'Everything',
         selected,
         disabled,
         available,
       })}
       ${createFilterItemTemplate({
-        id: FILTERS.FUTURE,
+        id: FilterType.FUTURE,
         label: 'Future',
         selected,
         disabled,
         available,
       })}
       ${createFilterItemTemplate({
-        id: FILTERS.PRESENT,
+        id: FilterType.PRESENT,
         label: 'Present',
         selected,
         disabled,
         available,
       })}
       ${createFilterItemTemplate({
-        id: FILTERS.PAST,
+        id: FilterType.PAST,
         label: 'Past',
         selected,
         disabled,
@@ -53,9 +53,9 @@ function createTemplate({ disabled, selected, available }) {
 
 class FiltersView extends AbstractStatefulView {
   #onFilterChange = null;
-  constructor({ disabled, selected, onFilterChange }) {
+  constructor({ disabled, selected, onFilterChange, available }) {
     super();
-    this._setState({ disabled, selected });
+    this._setState({ disabled, selected, available });
     this.#onFilterChange = onFilterChange;
     this.#setupHandlers();
   }

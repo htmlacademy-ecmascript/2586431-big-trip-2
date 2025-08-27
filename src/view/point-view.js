@@ -1,6 +1,9 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDate, humanizeTime, getTimeDifference } from '../utils.js';
 
+/**
+ * @param {TOffer} offer
+ */
 const createOfferTemplate = ({ title, price }) =>
   `<li class="event__offer">
       <span class="event__offer-title">${title}</span>
@@ -8,6 +11,12 @@ const createOfferTemplate = ({ title, price }) =>
       <span class="event__offer-price">${price}</span>
     </li>`;
 
+/**
+ * @param {Object} params
+ * @param {TPoint} params.point
+ * @param {string} params.destinationName
+ * @param {TOffer[]} params.offers
+ */
 function createTemplate({ point, destinationName, offers }) {
   const {
     base_price: basePrice,
@@ -37,7 +46,7 @@ function createTemplate({ point, destinationName, offers }) {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${type} ${destinationName}</h3>
+        <h3 class="event__title">${type} ${destinationName ?? ''}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${dateFrom}">
@@ -79,6 +88,14 @@ class PointView extends AbstractStatefulView {
   #handleEditClick = null;
   #onFavoriteClick = null;
 
+  /**
+   * @param {Object} config
+   * @param {TPoint} config.point
+   * @param {string} config.destinationName
+   * @param {TOffer[]} config.offers
+   * @param {() => void} config.onEditClick
+   * @param {() => void} config.onFavoriteClick
+   */
   constructor({
     point,
     destinationName,

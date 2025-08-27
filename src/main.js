@@ -8,27 +8,31 @@ import SortModel from './model/sort-model.js';
 import MainPresenter from './presenter/main-presenter.js';
 import 'flatpickr/dist/flatpickr.min.css';
 
-const mainContainer = document.querySelector('.trip-main');
-const listContainer = document.querySelector('.trip-events');
-const filtersContainer = document.querySelector('.trip-controls__filters');
+function initApp() {
+  const mainContainer = document.querySelector('.trip-main');
+  const listContainer = document.querySelector('.trip-events');
+  const filtersContainer = document.querySelector('.trip-controls__filters');
 
-const api = new Api(API_URL, AUTH_TOKEN);
+  const api = new Api(API_URL, AUTH_TOKEN);
 
-const pointsModel = new PointsModel({ api });
-const offersModel = new OffersModel({ api });
-const destinationsModel = new DestinationsModel({ api });
-const filtersModel = new FiltersModel();
-const sortModel = new SortModel();
+  const pointsModel = new PointsModel({ api });
+  const offersModel = new OffersModel({ api });
+  const destinationsModel = new DestinationsModel({ api });
+  const filtersModel = new FiltersModel();
+  const sortModel = new SortModel();
 
-const presenter = new MainPresenter({
-  mainContainer,
-  listContainer,
-  filtersContainer,
-  pointsModel,
-  offersModel,
-  destinationsModel,
-  filtersModel,
-  sortModel,
-});
+  const presenter = new MainPresenter({
+    mainContainer,
+    listContainer,
+    filtersContainer,
+    pointsModel,
+    offersModel,
+    destinationsModel,
+    filtersModel,
+    sortModel,
+  });
 
-presenter.render();
+  presenter.render();
+}
+
+initApp();

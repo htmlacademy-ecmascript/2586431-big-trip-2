@@ -3,16 +3,12 @@ import { render, RenderPosition, remove } from '../framework/render.js';
 import TripInfoView from '../view/trip-info-view.js';
 import ListView from '../view/list-view.js';
 import SortView from '../view/sort-view.js';
-import {
-  sortPointsByDate,
-  sortPointsByPrice,
-  sortPointsByTime,
-} from '../sorters.js';
-import { isPointFuture, isPointPresent, isPointPast } from '../filters.js';
+import { sortPoints } from '../sorters.js';
+import { filterPoints } from '../filters.js';
 import PointPresenter from './point-presenter.js';
 import FiltersPresenter from './filters-presenter.js';
 import ListMessageView from '../view/list-message-view.js';
-import { DEFAULTS, FILTERS, MESSAGES, SORTS } from '../constants.js';
+import { DEFAULTS, ListMessageText } from '../constants.js';
 import PointFormView from '../view/point-form-view.js';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 
@@ -119,7 +115,7 @@ class MainPresenter {
     this.#newPointView = null;
     this.#newPointButton.disabled = false;
     if (!this.#getPoints().length) {
-      this.#renderMessage(MESSAGES.EMPTY[this.#filtersModel.filter]);
+      this.#renderMessage(ListMessageText.EMPTY[this.#filtersModel.filter]);
     }
   };
 
@@ -164,7 +160,7 @@ class MainPresenter {
         this.#updateInfo();
         break;
       case this.#offersModel.EventType.ERROR:
-        this.#renderMessage(MESSAGES.FAILED);
+        this.#renderMessage(ListMessageText.FAILED);
         break;
     }
   };
@@ -179,7 +175,7 @@ class MainPresenter {
         this.#updateInfo();
         break;
       case this.#offersModel.EventType.ERROR:
-        this.#renderMessage(MESSAGES.FAILED);
+        this.#renderMessage(ListMessageText.FAILED);
         break;
     }
   };
@@ -200,7 +196,7 @@ class MainPresenter {
         this.#updateInfo();
         break;
       case this.#pointsModel.EventType.ERROR:
-        this.#renderMessage(MESSAGES.FAILED);
+        this.#renderMessage(ListMessageText.FAILED);
         break;
     }
   };
@@ -226,7 +222,7 @@ class MainPresenter {
       case this.#sortModel.EventType.CHANGE:
       case this.#sortModel.EventType.RESET:
         this.#renderPoints();
-        this.#sortView.updateElement({ selected: payload });
+        this.#sortView?.updateElement({ selected: payload });
         break;
     }
   };
@@ -274,34 +270,17 @@ class MainPresenter {
     this.#tripInfoView.updateElement({ points: enrichedPoints });
   }
 
+  /**
+   * Получение отфильтрованных и отсортированных точек
+   * @returns {TPoint[]} массив точек
+   */
   #getPoints() {
-    const filter = this.#filtersModel.filter;
-    const filteredPoints = this.#pointsModel.list.filter((point) => {
-      switch (filter) {
-        case FILTERS.EVERYTHING:
-          return true;
-        case FILTERS.FUTURE:
-          return isPointFuture(point);
-        case FILTERS.PRESENT:
-          return isPointPresent(point);
-        case FILTERS.PAST:
-          return isPointPast(point);
-        default:
-          return false;
-      }
-    });
+    const allPoints = this.#pointsModel.list;
+    const filterType = this.#filtersModel.filter;
+    const sortType = this.#sortModel.sort;
 
-    const sort = this.#sortModel.sort;
-    switch (sort) {
-      case SORTS.DAY:
-        return sortPointsByDate(filteredPoints);
-      case SORTS.PRICE:
-        return sortPointsByPrice(filteredPoints);
-      case SORTS.TIME:
-        return sortPointsByTime(filteredPoints);
-      default:
-        return filteredPoints;
-    }
+    const filteredPoints = filterPoints(allPoints, filterType);
+    return sortPoints(filteredPoints, sortType);
   }
 
   /**
@@ -376,24 +355,30 @@ class MainPresenter {
   #renderPoints() {
     if (!this.isReady) {
       if (!this.#listView) {
-        this.#renderMessage(MESSAGES.LOADING);
+        this.#renderMessage(ListMessageText.LOADING);
       }
       return;
     }
+
     const data = this.#getPoints();
     this.#updateSortViewDisabled(data.length < 1);
+
     if (!data.length && !this.#newPointView) {
-      this.#renderMessage(MESSAGES.EMPTY[this.#filtersModel.filter]);
+      this.#renderMessage(ListMessageText.EMPTY[this.#filtersModel.filter]);
       return;
     }
+
     if (this.#listView) {
       remove(this.#listView);
     }
+
     this.#listView = new ListView();
     render(this.#listView, this.#listContainer);
+
     if (this.#newPointView) {
       render(this.#newPointView, this.#listView.element);
     }
+
     data.forEach((point) => this.#renderPoint(point, this.#listView.element));
   }
 

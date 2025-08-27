@@ -1,6 +1,6 @@
 /* eslint-disable indent */
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { SORTS } from '../constants.js';
+import { SortType } from '../constants.js';
 
 function createSortItemTemplate({ id, label, disabled, selected }) {
   return `<div class="trip-sort__item  trip-sort__item--${id}">
@@ -14,31 +14,31 @@ function createSortItemTemplate({ id, label, disabled, selected }) {
 function createTemplate({ disabled, selected }) {
   return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
       ${createSortItemTemplate({
-        id: SORTS.DAY,
+        id: SortType.DAY,
         label: 'Day',
         disabled,
         selected,
       })}
       ${createSortItemTemplate({
-        id: SORTS.EVENT,
+        id: 'event',
         label: 'Event',
         disabled: true,
         selected,
       })}
       ${createSortItemTemplate({
-        id: SORTS.TIME,
+        id: SortType.TIME,
         label: 'Time',
         disabled,
         selected,
       })}
       ${createSortItemTemplate({
-        id: SORTS.PRICE,
+        id: SortType.PRICE,
         label: 'Price',
         disabled,
         selected,
       })}
       ${createSortItemTemplate({
-        id: SORTS.OFFER,
+        id: 'offer',
         label: 'Offers',
         disabled: true,
         selected,

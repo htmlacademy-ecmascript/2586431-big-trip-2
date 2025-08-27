@@ -1,11 +1,11 @@
 import dayjs from 'dayjs';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDate } from '../utils.js';
-import { sortPointsByDate } from '../sorters.js';
-import { INFO_MAX_DESTINATIONS } from '../constants.js';
+import { sortPoints } from '../sorters.js';
+import { INFO_MAX_DESTINATIONS, SortType } from '../constants.js';
 
 function getDates(points) {
-  const sortedPoints = sortPointsByDate(points);
+  const sortedPoints = sortPoints(points, SortType.DAY);
   const startDate = dayjs(sortedPoints[0].date_from);
   const endDate = dayjs(sortedPoints[sortedPoints.length - 1].date_to);
   return `${humanizeDate(startDate, true)} &mdash; ${humanizeDate(
@@ -25,7 +25,7 @@ function getTotalPrice(points) {
 }
 
 function getDestinations(points) {
-  const sortedPoints = sortPointsByDate(points);
+  const sortedPoints = sortPoints(points, SortType.DAY);
   const destinations = sortedPoints.map((point) => point.destination.name);
   const uniqueDestinations = destinations.filter(
     (value, index, self) => self[index - 1] !== value
