@@ -34,6 +34,8 @@ class MainPresenter {
   #listView;
   /** @type {SortView} */
   #sortView;
+  /** @type {TripInfoView} */
+  #tripInfoView;
   /** @type {(() => void) | null} */
   #closeLastForm = null;
   /** @type {PointFormView | null} */
@@ -87,6 +89,14 @@ class MainPresenter {
       lowerLimit: BLOCKER_LIMITS.LOWER,
       upperLimit: BLOCKER_LIMITS.UPPER,
     });
+  }
+
+  get isReady() {
+    return (
+      this.#pointsModel.isLoaded &&
+      this.#offersModel.isLoaded &&
+      this.#destinationsModel.isLoaded
+    );
   }
 
   /**
@@ -165,11 +175,13 @@ class MainPresenter {
     switch (event) {
       case this.#pointsModel.EventType.CREATE:
         this.#resetList();
+        this.#updateInfo();
         break;
       case this.#pointsModel.EventType.UPDATE:
       case this.#pointsModel.EventType.DELETE:
       case this.#pointsModel.EventType.INIT:
         this.#renderPoints();
+        this.#updateInfo();
         break;
     }
   };
@@ -211,20 +223,36 @@ class MainPresenter {
     const filtersPresenter = new FiltersPresenter({
       parentElement: this.#filtersContainer,
       filtersModel: this.#filtersModel,
+      pointsModel: this.#pointsModel,
     });
     filtersPresenter.render();
   }
 
-  #renderInfo() {
-    const enrichedPoints = this.#getPoints().map((point) => ({
+  #enrichPoints(points) {
+    return points.map((point) => ({
       ...point,
       destination: this.#destinationsModel.getById(point.destination),
       offers: point.offers.map((id) => this.#offersModel.getById(id)),
     }));
+  }
+
+  #renderInfo() {
     const tripInfo = new TripInfoView({
-      points: enrichedPoints,
+      points: [],
     });
-    render(tripInfo, this.#mainContainer, RenderPosition.AFTERBEGIN);
+    if (this.#tripInfoView) {
+      remove(this.#tripInfoView);
+    }
+    this.#tripInfoView = tripInfo;
+    render(this.#tripInfoView, this.#mainContainer, RenderPosition.AFTERBEGIN);
+  }
+
+  #updateInfo() {
+    if (!this.isReady) {
+      return;
+    }
+    const enrichedPoints = this.#enrichPoints(this.#getPoints());
+    this.#tripInfoView.updateElement({ points: enrichedPoints });
   }
 
   #getPoints() {
@@ -314,11 +342,7 @@ class MainPresenter {
   }
 
   #renderPoints() {
-    if (
-      !this.#pointsModel.isLoaded ||
-      !this.#offersModel.isLoaded ||
-      !this.#destinationsModel.isLoaded
-    ) {
+    if (!this.isReady) {
       return;
     }
     if (this.#listView) {
