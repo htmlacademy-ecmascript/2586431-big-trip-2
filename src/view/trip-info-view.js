@@ -1,23 +1,20 @@
 import dayjs from 'dayjs';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDate } from '../utils.js';
-import { sortPointsByDate } from '../sorters.js';
-import { INFO_MAX_DESTINATIONS } from '../constants.js';
+import { sortPoints } from '../sorters.js';
+import { INFO_MAX_DESTINATIONS, SortType } from '../constants.js';
 
 function getDates(points) {
-  if (!points.length) {
-    return '';
-  }
-  const sortedPoints = sortPointsByDate(points);
+  const sortedPoints = sortPoints(points, SortType.DAY);
   const startDate = dayjs(sortedPoints[0].date_from);
   const endDate = dayjs(sortedPoints[sortedPoints.length - 1].date_to);
-  return `${humanizeDate(startDate)} &mdash; ${humanizeDate(endDate)}`;
+  return `${humanizeDate(startDate, true)} &mdash; ${humanizeDate(
+    endDate,
+    true
+  )}`;
 }
 
 function getTotalPrice(points) {
-  if (!points.length) {
-    return 0;
-  }
   return points.reduce(
     (sum, point) =>
       sum +
@@ -28,10 +25,7 @@ function getTotalPrice(points) {
 }
 
 function getDestinations(points) {
-  if (!points.length) {
-    return '';
-  }
-  const sortedPoints = sortPointsByDate(points);
+  const sortedPoints = sortPoints(points, SortType.DAY);
   const destinations = sortedPoints.map((point) => point.destination.name);
   const uniqueDestinations = destinations.filter(
     (value, index, self) => self[index - 1] !== value
@@ -45,6 +39,9 @@ function getDestinations(points) {
 }
 
 function createTemplate({ points }) {
+  if (!points.length) {
+    return '<<section class="trip-main__trip-info  trip-info"></section>';
+  }
   const dates = getDates(points);
   const totalPrice = getTotalPrice(points);
   const destinations = getDestinations(points);
@@ -64,6 +61,8 @@ class TripInfoView extends AbstractStatefulView {
     super();
     this._setState({ points });
   }
+
+  _restoreHandlers() {}
 
   get template() {
     return createTemplate(this._state);

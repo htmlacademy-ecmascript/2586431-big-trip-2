@@ -37,34 +37,54 @@ class AxiosAtHome extends ApiService {
 }
 
 class Api extends AxiosAtHome {
-  /** @returns {Promise<TPoint[]>} */
+  /**
+   * Получение списка точек маршрута
+   * @returns {Promise<TPoint[]>} массив точек маршрута
+   */
   getPoints() {
     return this.get('points');
   }
 
-  /** @returns {Promise<TDestination[]>} */
+  /**
+   * Получение списка назначений
+   * @returns {Promise<TDestination[]>} массив назначений
+   */
   getDestinations() {
     return this.get('destinations');
   }
 
-  /** @returns {Promise<TOffersGroup[]>} */
+  /**
+   * Получение списка предложений
+   * @returns {Promise<TOffersGroup[]>} массив групп предложений
+   */
   getOffers() {
     return this.get('offers');
   }
 
-  /** @param {TPoint} point */
+  /**
+   * Создание новой точки маршрута
+   * @param {TPoint} point - данные точки для создания
+   * @returns {Promise<TPoint>} созданная точка
+   */
   createPoint(point) {
     return this.post('points', point);
   }
 
   /**
-   * @param {string} id
-   * @param {TPoint} body */
+   * Обновление существующей точки маршрута
+   * @param {string} id - идентификатор точки
+   * @param {TPoint} body - новые данные точки
+   * @returns {Promise<TPoint>} обновленная точка
+   */
   updatePoint(id, body) {
     return this.put(`points/${id}`, body);
   }
 
-  /** @param {string} id */
+  /**
+   * Удаление точки маршрута
+   * @param {string} id - идентификатор точки для удаления
+   * @returns {Promise<void>}
+   */
   deletePoint(id) {
     return this.delete(`points/${id}`);
   }

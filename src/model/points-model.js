@@ -6,6 +6,7 @@ const EventType = {
   UPDATE: 'update',
   DELETE: 'delete',
   FETCH: 'fetch',
+  ERROR: 'error',
   INIT: 'init',
 };
 
@@ -26,8 +27,12 @@ class PointsModel extends Observable {
   }
 
   async updateList() {
-    this.#data = await this.#api.getPoints();
-    this._notify(EventType.FETCH, this.#data);
+    try {
+      this.#data = await this.#api.getPoints();
+      this._notify(EventType.FETCH, this.#data);
+    } catch (err) {
+      this._notify(EventType.ERROR, err);
+    }
   }
 
   get list() {
@@ -54,21 +59,24 @@ class PointsModel extends Observable {
     const current = this.getPointById(id);
     const update = /** @type {TPoint} */ ({ ...current, ...body });
     const updated = await this.#api.updatePoint(id, update);
-    await this.updateList();
+    this.#data = this.#data.map((point) => (point.id === id ? updated : point));
+    // await this.updateList();
     this._notify(EventType.UPDATE, { id, body, updated });
   }
 
   /** @param {TPoint} point */
   async createPoint(point) {
     const created = await this.#api.createPoint(point);
-    await this.updateList();
+    this.#data.push(created);
+    // await this.updateList();
     this._notify(EventType.CREATE, created);
   }
 
   /** @param {string} id */
   async deletePoint(id) {
     await this.#api.deletePoint(id);
-    await this.updateList();
+    this.#data = this.#data.filter((point) => point.id !== id);
+    // await this.updateList();
     this._notify(EventType.DELETE, id);
   }
 }

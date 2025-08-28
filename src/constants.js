@@ -1,39 +1,52 @@
-const POINTS_COUNT = 4;
+const SortType = {
+  DAY: 'day',
+  PRICE: 'price',
+  TIME: 'time',
+};
+
+const FilterType = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+  PRESENT: 'present',
+  PAST: 'past',
+};
+
+const UiText = {
+  SAVE: 'Save',
+  SAVING: 'Saving...',
+  DELETE: 'Delete',
+  DELETING: 'Deleting...',
+  NEW_EVENT: 'New Event',
+  CANCEL: 'Cancel',
+};
+
+const ListMessageText = {
+  LOADING: 'Loading...',
+  FAILED: 'Failed to load latest route information',
+  EMPTY: {
+    [FilterType.EVERYTHING]: 'Click New Event to create your first point',
+    [FilterType.PAST]: 'There are no past events now',
+    [FilterType.PRESENT]: 'There are no present events now',
+    [FilterType.FUTURE]: 'There are no future events now',
+  },
+};
 
 const DateFormat = {
   MONTH_DAY: 'MMM D',
+  DAY_MONTH: 'D MMM',
   HOUR_MINUTE: 'HH:mm',
   DAY_MONTH_YEAR_HOUR_MINUTE: 'DD/MM/YY HH:mm',
   DURATION_MINUTE: 'mm[M]',
   DURATION_HOUR_MINUTE: 'HH[H] mm[M]',
-  DURATION_DAY_HOUR_MINUTE: 'DD[D] HH[H] mm[M]',
-};
-
-const BasePrice = {
-  MIN: 100,
-  MAX: 9999,
+  DURATION_DAY_SUFFIX: 'D',
+  DURATION_DAY_PAD: 2,
 };
 
 const INFO_MAX_DESTINATIONS = 3;
 
-const SORTS = {
-  DAY: 'day',
-  PRICE: 'price',
-  TIME: 'time',
-  OFFER: 'offer',
-  EVENT: 'event',
-};
-
-const FILTERS = {
-  EVERYTHING: 'everything',
-  PAST: 'past',
-  PRESENT: 'present',
-  FUTURE: 'future',
-};
-
 const DEFAULTS = {
-  FILTER: FILTERS.EVERYTHING,
-  SORT: SORTS.DAY,
+  FILTER: FilterType.EVERYTHING,
+  SORT: SortType.DAY,
   /** @type {Partial<TPoint>} */
   POINT: {
     type: 'flight',
@@ -45,24 +58,12 @@ const DEFAULTS = {
   },
 };
 
-const MESSAGES = {
-  EMPTY: {
-    [FILTERS.EVERYTHING]: 'Click New Event to create your first point',
-    [FILTERS.PAST]: 'There are no past events now',
-    [FILTERS.PRESENT]: 'There are no present events now',
-    [FILTERS.FUTURE]: 'There are no future events now',
-  },
-  LOADING: 'Loading...',
-  FAILED: 'Failed to load latest route information',
-};
-
 export {
-  POINTS_COUNT,
+  SortType,
+  FilterType,
+  UiText,
+  ListMessageText,
   DateFormat,
-  BasePrice,
   INFO_MAX_DESTINATIONS,
   DEFAULTS,
-  SORTS,
-  FILTERS,
-  MESSAGES,
 };

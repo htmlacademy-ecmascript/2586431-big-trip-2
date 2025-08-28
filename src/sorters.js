@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { SortType } from './constants';
 
 /**
  * @param {TPoint[]} points
@@ -14,7 +15,7 @@ const sortPointsByDate = (points) =>
  * @param {TPoint[]} points
  */
 const sortPointsByPrice = (points) =>
-  points.sort((a, b) => a.base_price - b.base_price);
+  points.sort((a, b) => b.base_price - a.base_price);
 
 /**
  * @param {TPoint[]} points
@@ -23,7 +24,24 @@ const sortPointsByTime = (points) =>
   points.sort((a, b) => {
     const dateA = dayjs(a.date_to).diff(dayjs(a.date_from));
     const dateB = dayjs(b.date_to).diff(dayjs(b.date_from));
-    return dateA - dateB;
+    return dateB - dateA;
   });
 
-export { sortPointsByDate, sortPointsByPrice, sortPointsByTime };
+/**
+ * @param {TPoint[]} points
+ * @param {string} sortType
+ */
+const sortPoints = (points, sortType) => {
+  switch (sortType) {
+    case SortType.DAY:
+      return sortPointsByDate(points);
+    case SortType.PRICE:
+      return sortPointsByPrice(points);
+    case SortType.TIME:
+      return sortPointsByTime(points);
+    default:
+      return [...points];
+  }
+};
+
+export { sortPoints };
