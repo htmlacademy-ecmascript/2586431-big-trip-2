@@ -81,7 +81,7 @@ class MainPresenter {
       this.#mainContainer.querySelector('.trip-main__event-add-btn')
     );
 
-    this.#newPointButton?.addEventListener('click', this.#handleNewPointClick);
+    this.#newPointButton?.addEventListener('click', this.#openNewPointView);
     document.addEventListener('keydown', this.#newPointEscHandler);
 
     this.#uiBlocker = new UiBlocker({
@@ -98,15 +98,6 @@ class MainPresenter {
     );
   }
 
-  /**
-   * @param {KeyboardEvent} evt
-   */
-  #newPointEscHandler = (evt) => {
-    if (evt.key === 'Escape' && this.#newPointView) {
-      this.#closeNewPointView();
-    }
-  };
-
   #closeNewPointView = () => {
     if (!this.#newPointView) {
       return;
@@ -119,7 +110,7 @@ class MainPresenter {
     }
   };
 
-  #handleNewPointClick = () => {
+  #openNewPointView = () => {
     if (this.#newPointView || !this.#listView.element) {
       return;
     }
@@ -135,7 +126,7 @@ class MainPresenter {
       onFormClose: this.#closeNewPointView,
       onFormSubmit: async (body) => {
         this.#uiBlocker.block();
-        await this.#pointsModel.createPoint(body).finally(() => {
+        await this.#pointsModel.create(body).finally(() => {
           this.#uiBlocker.unblock();
         });
         this.#closeNewPointView();
@@ -230,7 +221,7 @@ class MainPresenter {
   /**
    * @param {string} value
    */
-  #handleSortChange(value) {
+  #setSort(value) {
     this.#sortModel.sort = value;
   }
 
@@ -295,7 +286,7 @@ class MainPresenter {
       destinationsModel: this.#destinationsModel,
       onPointUpdate: async (update) => {
         this.#uiBlocker.block();
-        await this.#pointsModel.updatePoint(point.id, update).finally(() => {
+        await this.#pointsModel.update(point.id, update).finally(() => {
           this.#uiBlocker.unblock();
         });
       },
@@ -308,7 +299,7 @@ class MainPresenter {
       },
       onPointDelete: async () => {
         this.#uiBlocker.block();
-        await this.#pointsModel.deletePoint(point.id).finally(() => {
+        await this.#pointsModel.delete(point.id).finally(() => {
           this.#uiBlocker.unblock();
         });
       },
@@ -330,7 +321,7 @@ class MainPresenter {
       remove(this.#sortView);
     }
     this.#sortView = new SortView({
-      onSortChange: this.#handleSortChange.bind(this),
+      onChange: this.#setSort.bind(this),
       selected: this.#sortModel.sort,
       disabled,
     });
@@ -387,6 +378,15 @@ class MainPresenter {
     this.#renderInfo();
     this.#renderList();
   }
+
+  /**
+   * @param {KeyboardEvent} evt
+   */
+  #newPointEscHandler = (evt) => {
+    if (evt.key === 'Escape' && this.#newPointView) {
+      this.#closeNewPointView();
+    }
+  };
 }
 
 export default MainPresenter;

@@ -91,7 +91,7 @@ class PointView extends AbstractStatefulView {
   /**
    * @param {Object} config
    * @param {TPoint} config.point
-   * @param {string} config.destinationName
+   * @param {string} [config.destinationName]
    * @param {TOffer[]} config.offers
    * @param {() => void} config.onEditClick
    * @param {() => void} config.onFavoriteClick
@@ -108,6 +108,10 @@ class PointView extends AbstractStatefulView {
     this.#handleEditClick = onEditClick;
     this.#onFavoriteClick = onFavoriteClick;
     this.#setupHandlers();
+  }
+
+  get template() {
+    return createTemplate(this._state);
   }
 
   #setupHandlers() {
@@ -127,10 +131,6 @@ class PointView extends AbstractStatefulView {
     evt.preventDefault();
     this.#handleEditClick();
   };
-
-  get template() {
-    return createTemplate(this._state);
-  }
 
   #favoriteClickHandler = (evt) => {
     evt.preventDefault();

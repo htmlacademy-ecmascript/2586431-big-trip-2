@@ -18,11 +18,6 @@ class SortModel extends Observable {
     this.#sort = DEFAULTS.SORT;
   }
 
-  reset() {
-    this.#sort = DEFAULTS.SORT;
-    this._notify(EventType.RESET, this.#sort);
-  }
-
   get sort() {
     return this.#sort;
   }
@@ -30,6 +25,11 @@ class SortModel extends Observable {
   set sort(sort) {
     this.#sort = sort;
     this._notify(EventType.CHANGE, sort);
+  }
+
+  reset() {
+    this.#sort = DEFAULTS.SORT;
+    this._notify(EventType.RESET, this.#sort);
   }
 }
 
