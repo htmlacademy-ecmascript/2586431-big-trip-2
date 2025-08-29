@@ -18,11 +18,6 @@ class FiltersModel extends Observable {
     this.#filter = DEFAULTS.FILTER;
   }
 
-  reset() {
-    this.#filter = DEFAULTS.FILTER;
-    this._notify(EventType.RESET, this.#filter);
-  }
-
   get filter() {
     return this.#filter;
   }
@@ -30,6 +25,11 @@ class FiltersModel extends Observable {
   set filter(filter) {
     this.#filter = filter;
     this._notify(EventType.CHANGE, filter);
+  }
+
+  reset() {
+    this.#filter = DEFAULTS.FILTER;
+    this._notify(EventType.RESET, this.#filter);
   }
 }
 

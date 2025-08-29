@@ -22,12 +22,8 @@ class DestinationsModel extends Observable {
     });
   }
 
-  async updateData() {
-    try {
-      this.#data = await this.#api.getDestinations();
-    } catch (err) {
-      this._notify(EventType.ERROR, err);
-    }
+  get isLoaded() {
+    return this.#data !== undefined;
   }
 
   get list() {
@@ -37,12 +33,17 @@ class DestinationsModel extends Observable {
     return this.#data;
   }
 
-  get isLoaded() {
-    return this.#data !== undefined;
-  }
-
+  /** @param {string} id */
   getById(id) {
     return this.#data.find((destination) => destination.id === id);
+  }
+
+  async updateData() {
+    try {
+      this.#data = await this.#api.getDestinations();
+    } catch (err) {
+      this._notify(EventType.ERROR, err);
+    }
   }
 }
 

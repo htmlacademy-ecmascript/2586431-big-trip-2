@@ -1,5 +1,4 @@
 // @ts-check
-/* eslint-disable camelcase */
 import { render, replace } from '../framework/render';
 import PointFormView from '../view/point-form-view';
 import PointView from '../view/point-view';
@@ -64,7 +63,7 @@ class PointPresenter {
 
   #handleDelete = async () => {
     await this.#onPointDelete();
-    this.#handleFormClose();
+    this.#closeForm();
   };
 
   #prepareForm() {
@@ -73,10 +72,10 @@ class PointPresenter {
       point: this.#point,
       offersModel: this.#offersModel,
       destinations,
-      onFormClose: this.#handleFormClose,
+      onFormClose: this.#closeForm,
       onFormSubmit: async (values) => {
         await this.#onPointUpdate(values);
-        this.#handleFormClose();
+        this.#closeForm();
       },
       onReset: this.#handleDelete,
     });
@@ -96,20 +95,13 @@ class PointPresenter {
   render() {
     this.#pointView = new PointView({
       ...this.#preparePointViewData(this.#point),
-      onEditClick: this.#handleFormOpen,
-      onFavoriteClick: this.#handleFavoriteClick,
+      onEditClick: this.#openForm,
+      onFavoriteClick: this.#toggleFavorite,
     });
     this.#prepareForm();
     render(this.#pointView, this.#parentElement);
     this.#currentView = this.#pointView;
   }
-
-  #escKeyDownHandler = (evt) => {
-    if (evt.key === 'Escape') {
-      evt.preventDefault();
-      this.#handleFormClose();
-    }
-  };
 
   /**
    * @param {string} mode
@@ -129,22 +121,30 @@ class PointPresenter {
     }
   };
 
-  #handleFormOpen = () => {
+  #openForm = () => {
     this.#onFormOpen(() => this.#setMode(Mode.VIEW));
     this.#setMode(Mode.EDIT);
   };
 
-  #handleFormClose = () => {
+  #closeForm = () => {
     this.#onFormClose(() => this.#setMode(Mode.EDIT));
     this.#setMode(Mode.VIEW);
   };
 
-  #handleFavoriteClick = async () => {
+  #toggleFavorite = async () => {
     await this.#onPointUpdate({
+      // eslint-disable-next-line camelcase
       is_favorite: !this.#point.is_favorite,
     }).catch(() => {
       this.#pointView.shake();
     });
+  };
+
+  #escKeyDownHandler = (evt) => {
+    if (evt.key === 'Escape') {
+      evt.preventDefault();
+      this.#closeForm();
+    }
   };
 }
 

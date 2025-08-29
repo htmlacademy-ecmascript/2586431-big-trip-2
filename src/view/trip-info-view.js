@@ -62,11 +62,11 @@ class TripInfoView extends AbstractStatefulView {
     this._setState({ points });
   }
 
-  _restoreHandlers() {}
-
   get template() {
     return createTemplate(this._state);
   }
+
+  _restoreHandlers() {}
 }
 
 export default TripInfoView;

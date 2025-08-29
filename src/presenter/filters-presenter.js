@@ -1,5 +1,4 @@
 // @ts-check
-/* eslint-disable camelcase */
 import { getAvailableFiltersForPoints } from '../filters';
 import { remove, render } from '../framework/render';
 import FiltersView from '../view/filters-view';
@@ -41,14 +40,14 @@ class FiltersPresenter {
     this.#filtersView = new FiltersView({
       disabled: this.#disabled,
       selected: this.#filtersModel.filter,
-      onFilterChange: this.#handleFilterChange.bind(this),
+      onChange: this.#setFilter.bind(this),
       available: [],
     });
 
     render(this.#filtersView, this.#parentElement);
   }
 
-  #handleFilterChange = (filter) => {
+  #setFilter = (filter) => {
     this.#filtersModel.filter = filter;
   };
 

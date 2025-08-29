@@ -1,6 +1,4 @@
 // @ts-check
-/* eslint-disable indent */
-/* eslint-disable camelcase */
 import flatpickr from 'flatpickr';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
@@ -96,6 +94,7 @@ function createDescriptionTemplate(destination) {
     )
     .join('');
 
+  // prettier-ignore
   return `<section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">
         Destination
@@ -104,16 +103,16 @@ function createDescriptionTemplate(destination) {
         ${description}
       </p>
       ${
-        pictures?.length
-          ? `
+  pictures?.length
+    ? `
       <div class="event__photos-container">
         <div class="event__photos-tape">
           ${picturesListTemplate}
         </div>
       </div>
       `
-          : ''
-      }
+    : ''
+}
     </section>`;
 }
 
@@ -169,6 +168,7 @@ function createTemplate(state) {
     }
   }
 
+  // prettier-ignore
   return `<div><form class="event event--edit" action="#" method="post" autocomplete="off">
       <header class="event__header">
         <div class="event__type-wrapper">
@@ -208,13 +208,13 @@ function createTemplate(state) {
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-${id}">From</label>
           <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${humanDateTimeFrom}" required ${
-    disabled ? 'disabled' : ''
-  }>
+  disabled ? 'disabled' : ''
+}>
           &mdash;
           <label class="visually-hidden" for="event-end-time-${id}">To</label>
           <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${humanDateTimeTo}" required ${
-    disabled ? 'disabled' : ''
-  }>
+  disabled ? 'disabled' : ''
+}>
         </div>
 
         <div class="event__field-group  event__field-group--price">
@@ -222,13 +222,13 @@ function createTemplate(state) {
             <span class="visually-hidden">Price</span>&euro;
           </label>
           <input class="event__input  event__input--price" id="event-price-${id}" type="number" min="1" required name="event-price" value="${basePrice}" ${
-    disabled ? 'disabled' : ''
-  }>
+  disabled ? 'disabled' : ''
+}>
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit" ${
-          disabled ? 'disabled' : ''
-        }>
+  disabled ? 'disabled' : ''
+}>
           ${isSaving ? 'Saving...' : 'Save'}
         </button>
         <button class="event__reset-btn" type="reset">
@@ -255,6 +255,12 @@ class PointFormView extends AbstractStatefulView {
   #startTimePicker;
   /** @type {import('flatpickr').default.Instance} */
   #endTimePicker;
+  #pickerConfig = {
+    enableTime: true,
+    // eslint-disable-next-line camelcase
+    time_24hr: true,
+    dateFormat: 'd/m/y H:i',
+  };
 
   /**
    * @param {{
@@ -291,10 +297,35 @@ class PointFormView extends AbstractStatefulView {
     this.#setupHandlers();
   }
 
-  #pickerConfig = {
-    enableTime: true,
-    time_24hr: true,
-    dateFormat: 'd/m/y H:i',
+  get template() {
+    return createTemplate(this._state);
+  }
+
+  reset() {
+    this.updateElement({ point: this._state.initialPoint });
+  }
+
+  /**
+   * @param {TOffer[]} availableOffers
+   */
+  #updateAvailableOffers = (availableOffers) => {
+    this.updateElement({
+      offers: availableOffers,
+      point: { ...this._state.point, offers: [] },
+    });
+  };
+
+  /**
+   * @param {Partial<TPoint>} update
+   * @param {{ optimistic?: boolean }} options
+   */
+  #updatePoint = (update, { optimistic = false } = {}) => {
+    const point = { ...this._state.point, ...update };
+    if (optimistic) {
+      this._setState({ point });
+    } else {
+      this.updateElement({ point });
+    }
   };
 
   #setupHandlers() {
@@ -362,34 +393,12 @@ class PointFormView extends AbstractStatefulView {
     if (isStartTime) {
       this.#endTimePicker.set('minDate', date.toDate());
       if (date.isAfter(currentEnd)) {
+        // eslint-disable-next-line camelcase
         update.date_to = date.toISOString();
         this.#endTimePicker.setDate(date.toDate());
       }
     }
     this.#updatePoint(update, { optimistic: true });
-  };
-
-  /**
-   * @param {TOffer[]} availableOffers
-   */
-  #updateAvailableOffers = (availableOffers) => {
-    this.updateElement({
-      offers: availableOffers,
-      point: { ...this._state.point, offers: [] },
-    });
-  };
-
-  /**
-   * @param {Partial<TPoint>} update
-   * @param {{ optimistic?: boolean }} options
-   */
-  #updatePoint = (update, { optimistic = false } = {}) => {
-    const point = { ...this._state.point, ...update };
-    if (optimistic) {
-      this._setState({ point });
-    } else {
-      this.updateElement({ point });
-    }
   };
 
   #typeChangeHandler = (evt) => {
@@ -426,8 +435,8 @@ class PointFormView extends AbstractStatefulView {
     if (this._state.disabled) {
       return;
     }
-    // eslint-disable-next-line camelcase
     this.#updatePoint(
+      // eslint-disable-next-line camelcase
       { base_price: Number(evt.target.value) },
       { optimistic: true }
     );
@@ -474,10 +483,6 @@ class PointFormView extends AbstractStatefulView {
     this.#handleFormClose?.();
   };
 
-  reset() {
-    this.updateElement({ point: this._state.initialPoint });
-  }
-
   #resetHandler = async () => {
     if (this._state.disabled) {
       return;
@@ -492,10 +497,6 @@ class PointFormView extends AbstractStatefulView {
       this.shake();
     });
   };
-
-  get template() {
-    return createTemplate(this._state);
-  }
 }
 
 export default PointFormView;

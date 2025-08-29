@@ -22,12 +22,8 @@ class OffersModel extends Observable {
     });
   }
 
-  async updateData() {
-    try {
-      this.#data = await this.#api.getOffers();
-    } catch (err) {
-      this._notify(EventType.ERROR, err);
-    }
+  get isLoaded() {
+    return this.#data !== undefined;
   }
 
   get list() {
@@ -37,8 +33,8 @@ class OffersModel extends Observable {
     return this.#data;
   }
 
-  get isLoaded() {
-    return this.#data !== undefined;
+  get types() {
+    return this.list.map((offer) => offer.type);
   }
 
   /** @param {string} id */
@@ -56,8 +52,12 @@ class OffersModel extends Observable {
     return this.list.find((offer) => offer.type === type)?.offers;
   }
 
-  get types() {
-    return this.list.map((offer) => offer.type);
+  async updateData() {
+    try {
+      this.#data = await this.#api.getOffers();
+    } catch (err) {
+      this._notify(EventType.ERROR, err);
+    }
   }
 }
 
