@@ -1,7 +1,7 @@
 // @ts-check
-import { getAvailableFiltersForPoints } from '../filters';
-import { remove, render } from '../framework/render';
-import FiltersView from '../view/filters-view';
+import { getAvailableFiltersForPoints } from '../filters.js';
+import { remove, render } from '../framework/render.js';
+import FiltersView from '../view/filters-view.js';
 
 class FiltersPresenter {
   /** @type {HTMLElement} */

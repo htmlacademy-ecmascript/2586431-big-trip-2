@@ -1,7 +1,7 @@
 // @ts-check
-import { render, replace } from '../framework/render';
-import PointFormView from '../view/point-form-view';
-import PointView from '../view/point-view';
+import { render, replace } from '../framework/render.js';
+import PointFormView from '../view/point-form-view.js';
+import PointView from '../view/point-view.js';
 
 const Mode = {
   VIEW: 'view',

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { SortType } from './constants';
+import { SortType } from './constants.js';
 
 /**
  * @param {TPoint[]} points

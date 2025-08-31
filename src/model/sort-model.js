@@ -1,6 +1,6 @@
 // @ts-check
-import Observable from '../framework/observable';
-import { DEFAULTS } from '../constants';
+import Observable from '../framework/observable.js';
+import { DEFAULTS } from '../constants.js';
 
 const EventType = {
   CHANGE: 'change',

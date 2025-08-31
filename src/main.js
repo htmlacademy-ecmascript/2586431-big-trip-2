@@ -1,12 +1,12 @@
+import 'flatpickr/dist/flatpickr.min.css';
 import Api from './api.js';
 import { API_URL, AUTH_TOKEN } from './env.js';
 import DestinationsModel from './model/destinations-model.js';
 import OffersModel from './model/offers-model.js';
 import PointsModel from './model/points-model.js';
 import FiltersModel from './model/filters-model.js';
-import SortModel from './framework/sort-model.js';
+import SortModel from './model/sort-model.js';
 import MainPresenter from './presenter/main-presenter.js';
-import 'flatpickr/dist/flatpickr.min.css';
 
 function initApp() {
   const mainContainer = document.querySelector('.trip-main');

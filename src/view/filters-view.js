@@ -1,4 +1,4 @@
-import { FilterType } from '../constants';
+import { FilterType } from '../constants.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
 function createFilterItemTemplate({

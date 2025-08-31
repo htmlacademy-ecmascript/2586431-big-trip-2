@@ -1,8 +1,8 @@
 // @ts-check
 import flatpickr from 'flatpickr';
+import dayjs from 'dayjs';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { humanizeDateTime } from '../utils.js';
-import dayjs from 'dayjs';
 import { DEFAULTS } from '../constants.js';
 
 /**

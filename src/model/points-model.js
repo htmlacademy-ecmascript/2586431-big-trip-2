@@ -1,5 +1,5 @@
 // @ts-check
-import Observable from '../framework/observable';
+import Observable from '../framework/observable.js';
 
 const EventType = {
   CREATE: 'create',
