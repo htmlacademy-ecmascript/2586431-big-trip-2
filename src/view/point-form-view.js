@@ -41,17 +41,17 @@ function createDestinationsTemplate(destinations) {
 }
 
 /**
- * @param {TOffer[]} offers
- * @param {string[] | undefined} selected
+ * @param {TOffer[] | undefined} offers
+ * @param {string[] | undefined} selectedOffers
  */
-function createOffersTemplate(offers, selected) {
+function createOffersTemplate(offers = [], selectedOffers = []) {
   if (offers.length === 0) {
     return '';
   }
 
   const offersListTemplate = offers
     .map(({ id, title, price }) => {
-      const isChecked = selected?.includes(id);
+      const isChecked = selectedOffers?.includes(id);
       return `<div class="event__offer-selector">
         <input
           class="event__offer-checkbox visually-hidden"

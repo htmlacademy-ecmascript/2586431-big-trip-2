@@ -11,15 +11,6 @@ const FilterType = {
   PAST: 'past',
 };
 
-const UiText = {
-  SAVE: 'Save',
-  SAVING: 'Saving...',
-  DELETE: 'Delete',
-  DELETING: 'Deleting...',
-  NEW_EVENT: 'New Event',
-  CANCEL: 'Cancel',
-};
-
 const ListMessageText = {
   LOADING: 'Loading...',
   FAILED: 'Failed to load latest route information',
@@ -61,7 +52,6 @@ const DEFAULTS = {
 export {
   SortType,
   FilterType,
-  UiText,
   ListMessageText,
   DateFormat,
   INFO_MAX_DESTINATIONS,

@@ -35,20 +35,20 @@ const filterPoints = (points, filterType, now = new Date()) => {
 };
 
 const getAvailableFiltersForPoints = (points) => {
-  const available = [];
+  const availableFilters = [];
   if (points.length > 0) {
-    available.push(FilterType.EVERYTHING);
+    availableFilters.push(FilterType.EVERYTHING);
   }
   if (points.some(isPointFuture)) {
-    available.push(FilterType.FUTURE);
+    availableFilters.push(FilterType.FUTURE);
   }
   if (points.some(isPointPresent)) {
-    available.push(FilterType.PRESENT);
+    availableFilters.push(FilterType.PRESENT);
   }
   if (points.some(isPointPast)) {
-    available.push(FilterType.PAST);
+    availableFilters.push(FilterType.PAST);
   }
-  return available;
+  return availableFilters;
 };
 
 export { filterPoints, getAvailableFiltersForPoints };
